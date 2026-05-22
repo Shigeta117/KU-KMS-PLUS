@@ -18,10 +18,25 @@ if (!window.__KU_KMS_INJECTED) {
   });
 }
 
+// SYNC_COMPLETE メッセージリスナー（二重登録防止）
+if (!window.__KU_LMS_MSG_LISTENER) {
+  window.__KU_LMS_MSG_LISTENER = true;
+  chrome.runtime.onMessage.addListener((message) => {
+    if (message.type === 'SYNC_COMPLETE') {
+      if (message.data) {
+        applyDBStatesToPage(message.data);
+      } else {
+        applySyncFromDB();
+      }
+    }
+  });
+}
+
 // =============================================
 // UI拡張
 // =============================================
 function runUIEnhancements() {
+  injectSyncStatusBar();
   if (document.querySelector('section.list-group-item.cl-contentsList_listGroupItem')) {
     injectDeadlineBadges();
     injectActionButtons();
@@ -29,6 +44,8 @@ function runUIEnhancements() {
   if (document.querySelector('table#schedule-table')) {
     injectMiniDashboard();
   }
+  // DB状態を非同期で反映（UIをブロックしない）
+  applySyncFromDB();
 }
 
 // 授業ページ: 各課題ブロックに残り時間バッジを挿入
@@ -86,6 +103,134 @@ function injectDeadlineBadges() {
       el.appendChild(badge);
     });
   });
+}
+
+// =============================================
+// フローティング同期ステータスバー
+// =============================================
+function injectSyncStatusBar() {
+  if (document.getElementById('kulms-sync-bar')) return;
+
+  // スタイルの注入
+  if (!document.getElementById('kulms-sync-styles')) {
+    const style = document.createElement('style');
+    style.id = 'kulms-sync-styles';
+    style.textContent = [
+      '@keyframes kulms-blink{0%,100%{opacity:1}50%{opacity:.3}}',
+      '#kulms-sync-bar{position:fixed;bottom:20px;right:20px;z-index:99999;',
+      'display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:10px;',
+      'font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;',
+      'font-size:12px;font-weight:600;color:#fff;overflow:hidden;',
+      'background:rgba(30,41,59,.92);backdrop-filter:blur(8px);',
+      'box-shadow:0 4px 16px rgba(0,0,0,.18);',
+      'transition:all .4s cubic-bezier(.4,0,.2,1);',
+      'transform:translateY(80px);opacity:0;pointer-events:none}',
+      '#kulms-sync-bar.kulms-visible{transform:translateY(0);opacity:1;pointer-events:auto}',
+      '#kulms-sync-bar.kulms-minimized{padding:6px 10px;font-size:10px;opacity:.6}',
+      '#kulms-sync-progress{position:absolute;top:0;left:0;height:100%;background:rgba(59,130,246,.25);transition:width 0.8s linear;width:0;display:none;z-index:0;}',
+    ].join('');
+    document.head.appendChild(style);
+  }
+
+  const bar = document.createElement('div');
+  bar.id = 'kulms-sync-bar';
+
+  const dot = document.createElement('span');
+  dot.id = 'kulms-sync-dot';
+  dot.style.cssText = 'width:8px;height:8px;border-radius:50%;flex-shrink:0;background:#94a3b8;position:relative;z-index:1;';
+
+  const text = document.createElement('span');
+  text.id = 'kulms-sync-text';
+  text.style.cssText = 'position:relative;z-index:1;';
+  text.textContent = '';
+
+  const progress = document.createElement('div');
+  progress.id = 'kulms-sync-progress';
+
+  bar.appendChild(dot);
+  bar.appendChild(text);
+  bar.appendChild(progress);
+  document.body.appendChild(bar);
+
+  // 初期状態を読み込み
+  chrome.storage.local.get(['syncStatus', 'lastSyncAt', 'lastSyncCount', 'lastSyncError', 'syncProgress', 'syncDetail'])
+    .then(updateSyncStatusBar);
+
+  // ストレージ変更の監視
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area !== 'local') return;
+    if ('syncStatus' in changes || 'lastSyncAt' in changes || 'lastSyncError' in changes || 'syncProgress' in changes || 'syncDetail' in changes) {
+      chrome.storage.local.get(['syncStatus', 'lastSyncAt', 'lastSyncCount', 'lastSyncError', 'syncProgress', 'syncDetail'])
+        .then(updateSyncStatusBar);
+    }
+  });
+}
+
+function updateSyncStatusBar({ syncStatus, lastSyncAt, lastSyncCount, syncProgress, syncDetail }) {
+  const bar  = document.getElementById('kulms-sync-bar');
+  const dot  = document.getElementById('kulms-sync-dot');
+  const text = document.getElementById('kulms-sync-text');
+  const prog = document.getElementById('kulms-sync-progress');
+  if (!bar || !dot || !text) return;
+
+  const status = syncStatus ?? 'idle';
+  bar.classList.remove('kulms-minimized');
+  clearTimeout(bar.__hideTimer);
+  clearTimeout(bar.__minimizeTimer);
+
+  switch (status) {
+    case 'syncing': {
+      dot.style.background = '#3b82f6';
+      dot.style.animation  = 'kulms-blink .9s ease-in-out infinite';
+
+      let textContent = '同期中…';
+      if (syncProgress && syncProgress.total > 0) {
+        const pct = Math.round((syncProgress.current / syncProgress.total) * 100);
+        textContent = `同期中… ${pct}%`;
+        if (prog) {
+          prog.style.width = `${pct}%`;
+          prog.style.display = 'block';
+        }
+      } else if (syncDetail) {
+        if (prog) prog.style.display = 'none';
+      }
+      text.textContent = textContent;
+      bar.classList.add('kulms-visible');
+      break;
+    }
+
+    case 'success': {
+      dot.style.background = '#22c55e';
+      dot.style.animation  = 'none';
+      const parts = [];
+      if (lastSyncCount != null) parts.push(`${lastSyncCount}件`);
+      if (lastSyncAt) {
+        parts.push(new Date(lastSyncAt).toLocaleString('ja-JP', {
+          hour: '2-digit', minute: '2-digit',
+        }));
+      }
+      text.textContent = `✓ 同期完了${parts.length ? ' · ' + parts.join(' · ') : ''}`;
+      if (prog) prog.style.display = 'none';
+      bar.classList.add('kulms-visible');
+      bar.__minimizeTimer = setTimeout(() => bar.classList.add('kulms-minimized'), 3000);
+      bar.__hideTimer     = setTimeout(() => bar.classList.remove('kulms-visible'), 8000);
+      break;
+    }
+
+    case 'error':
+      dot.style.background = '#ef4444';
+      dot.style.animation  = 'none';
+      text.textContent      = '✕ 同期エラー';
+      if (prog) prog.style.display = 'none';
+      bar.classList.add('kulms-visible');
+      bar.__hideTimer = setTimeout(() => bar.classList.remove('kulms-visible'), 10000);
+      break;
+
+    default:
+      bar.classList.remove('kulms-visible');
+      if (prog) prog.style.display = 'none';
+      break;
+  }
 }
 
 // 授業ページ: 各課題ブロックに「完了」「非表示」ボタンを挿入し Supabase を更新
@@ -242,8 +387,10 @@ async function injectMiniDashboard() {
 
   panel.innerHTML = [
     '<div style="font-size:11px;font-weight:700;letter-spacing:.06em;opacity:.7;margin-bottom:8px;">📋 KU-LMS+ 締切が近い課題</div>',
+    '<div id="kulms-dashboard-content">',
     itemsHtml,
     `<div style="font-size:10px;opacity:.5;margin-top:8px;margin-bottom:10px;">最終同期: ${syncTime}</div>`,
+    '</div>',
     `<a href="${KU_LMS_PWA_URL}" target="_blank" rel="noopener" `,
     'style="display:block;text-align:center;background:#fff;color:#004a8f;',
     'font-weight:700;font-size:13px;padding:9px;border-radius:7px;text-decoration:none;" ',
@@ -258,21 +405,80 @@ async function injectMiniDashboard() {
 // メインスクレイプ処理
 // =============================================
 async function runScraper() {
+  // Case 1: トップページ — バッチスクレイプ（AbortController付き）
   const scheduleTable = document.querySelector('table#schedule-table');
-  if (!scheduleTable) return;
+  if (scheduleTable) {
+    await runBatchScrape(scheduleTable);
+    return;
+  }
+
+  // Case 2: コースページ — ライブDOMから直接スクレイプ（fetchなし）
+  if (window.location.href.includes('/course.php/') &&
+      document.querySelector('section.list-group-item.cl-contentsList_listGroupItem')) {
+    await scrapeCurrentCoursePage();
+  }
+}
+
+// =============================================
+// コースページ: ライブDOMスクレイプ（HTTPリクエストなし）
+// =============================================
+async function scrapeCurrentCoursePage() {
+  const url = window.location.href;
+  const courseId = extractCourseId(url);
+  if (!courseId) return;
 
   sendStatus('scanning');
 
-  // Step 1: すべての授業リンクを抽出（/webclass/course.php/ を含む a タグ）
+  const courseName = extractCourseNameFromPage();
+  const assignments = parseCoursePageDOM(document, url, courseId, courseName);
 
-  // 1a. 時間割テーブルから
+  if (!assignments.length) return;
+
+  sendStatus('uploading', `${assignments.length} 件を同期`);
+  chrome.runtime.sendMessage({ type: 'UPSERT_ASSIGNMENTS', data: assignments });
+}
+
+// コースページからコース名をベストエフォートで取得
+function extractCourseNameFromPage() {
+  // パンくずリストから取得を試行
+  const crumbs = document.querySelectorAll('.breadcrumb li, .breadcrumb a, [aria-label="breadcrumb"] a');
+  for (const el of crumbs) {
+    const text = el.textContent?.trim();
+    if (text && text.length > 2 && !/(\u30db\u30fc\u30e0|\u30de\u30a4\u30da\u30fc\u30b8|Home|Top)/i.test(text)) {
+      return text;
+    }
+  }
+  // document.title から取得（"コース名 - WebClass" 等の形式）
+  const title = document.title ?? '';
+  const cleaned = title.replace(/\s*[-\u2013\u2014|]\s*(WebClass|KULMS).*$/i, '').trim();
+  if (cleaned && cleaned.length > 2) return cleaned;
+  return null;
+}
+
+// =============================================
+// トップページ: バッチスクレイプ（中断可能）
+// =============================================
+async function runBatchScrape(scheduleTable) {
+  const controller = new AbortController();
+  const { signal } = controller;
+
+  // ページ離脱・タブ非表示・リンククリックで即中断
+  const abort = () => { if (!signal.aborted) controller.abort(); };
+  window.addEventListener('beforeunload', abort);
+  const onVisibility = () => { if (document.visibilityState === 'hidden') abort(); };
+  document.addEventListener('visibilitychange', onVisibility);
+  const onLinkClick = (e) => { if (e.target.closest('a[href]')) abort(); };
+  document.addEventListener('click', onLinkClick, { capture: true });
+
+  sendStatus('scanning');
+
+  // Step 1: すべての授業リンクを抽出
   const courseLinks = Array.from(scheduleTable.querySelectorAll('a[href*="/webclass/course.php/"]'))
     .map((a) => ({
       url:        a.href,
       courseName: extractCourseName(a.textContent ?? ''),
     }));
 
-  // 1b. 時間割外コース（オンデマンド・集中・隔週等）を courses_list_left / right から追加
   for (const listId of ['courses_list_left', 'courses_list_right']) {
     const container = document.getElementById(listId);
     if (!container) continue;
@@ -284,7 +490,6 @@ async function runScraper() {
     }
   }
 
-  // 重複 URL を除去（時間割とコースリストで同じ授業が現れる場合）
   const seen = new Set();
   const uniqueLinks = courseLinks.filter(({ url }) => {
     if (seen.has(url)) return false;
@@ -297,40 +502,58 @@ async function runScraper() {
     return;
   }
 
-  sendStatus('fetching', `${uniqueLinks.length} 授業を処理します`);
+  sendStatus('fetching', `0/${uniqueLinks.length} 授業を取得中`, { current: 0, total: uniqueLinks.length + 1 });
 
   const assignments = [];
 
-  for (const { url: courseUrl, courseName } of uniqueLinks) {
+  for (let i = 0; i < uniqueLinks.length; i++) {
+    const { url: courseUrl, courseName } = uniqueLinks[i];
+    if (signal.aborted) break;
+
     const courseId = extractCourseId(courseUrl);
 
     try {
-      const html = await fetchFollowingJsRedirect(courseUrl);
+      const html = await fetchFollowingJsRedirect(courseUrl, signal);
       if (!html) continue;
-      const parsed = parseCoursePage(html, courseUrl, courseId, courseName);
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const parsed = parseCoursePageDOM(doc, courseUrl, courseId, courseName);
       assignments.push(...parsed);
     } catch (e) {
+      if (e.name === 'AbortError') break;
       console.warn('[KU-LMS+] fetch 失敗:', courseUrl, e.message);
     }
 
+    if (!signal.aborted) {
+      sendStatus('fetching', `${i + 1}/${uniqueLinks.length} 授業を取得中`, { current: i + 1, total: uniqueLinks.length + 1 });
+    }
+
+    if (signal.aborted) break;
     await new Promise((r) => setTimeout(r, 500));
   }
 
-  if (!assignments.length) {
-    sendStatus('no_assignments_found');
-    return;
-  }
+  // クリーンアップ
+  window.removeEventListener('beforeunload', abort);
+  document.removeEventListener('visibilitychange', onVisibility);
+  document.removeEventListener('click', onLinkClick, { capture: true });
 
-  sendStatus('uploading', `${assignments.length} 件を Supabase に送信`);
-  chrome.runtime.sendMessage({ type: 'UPSERT_ASSIGNMENTS', data: assignments });
+  // 中断されても取得済みデータは部分upsert
+  if (assignments.length) {
+    const label = signal.aborted
+      ? `${assignments.length} 件を部分同期`
+      : `${assignments.length} 件を Supabase に送信`;
+    sendStatus('uploading', label, { current: uniqueLinks.length + 0.9, total: uniqueLinks.length + 1 });
+    chrome.runtime.sendMessage({ type: 'UPSERT_ASSIGNMENTS', data: assignments });
+  } else if (!signal.aborted) {
+    sendStatus('no_assignments_found');
+  }
 }
 
 // =============================================
 // JS リダイレクトを透過的に追跡する fetch
 // WebClass は認証確認後に window.location.href = "..." でリダイレクトする
 // =============================================
-async function fetchFollowingJsRedirect(url) {
-  const res = await fetch(url, { credentials: 'include' });
+async function fetchFollowingJsRedirect(url, signal) {
+  const res = await fetch(url, { credentials: 'include', signal });
   if (!res.ok) {
     console.warn('[KU-LMS+] HTTP', res.status, url);
     return null;
@@ -344,7 +567,7 @@ async function fetchFollowingJsRedirect(url) {
   const redirectUrl = new URL(m[1], url).href;
   console.info('[KU-LMS+] JS redirect:', url, '→', redirectUrl);
 
-  const res2 = await fetch(redirectUrl, { credentials: 'include' });
+  const res2 = await fetch(redirectUrl, { credentials: 'include', signal });
   if (!res2.ok) {
     console.warn('[KU-LMS+] リダイレクト先 HTTP', res2.status, redirectUrl);
     return null;
@@ -353,10 +576,9 @@ async function fetchFollowingJsRedirect(url) {
 }
 
 // =============================================
-// 授業ページの HTML 解析
+// 授業ページの DOM 解析
 // =============================================
-function parseCoursePage(html, baseUrl, courseId, courseName) {
-  const doc = new DOMParser().parseFromString(html, 'text/html');
+function parseCoursePageDOM(doc, baseUrl, courseId, courseName) {
   const results = [];
 
   doc.querySelectorAll('section.list-group-item.cl-contentsList_listGroupItem').forEach((section) => {
@@ -407,6 +629,142 @@ function parseCoursePage(html, baseUrl, courseId, courseName) {
 }
 
 // =============================================
+// DB→ページ同期
+// =============================================
+async function applySyncFromDB() {
+  try {
+    const res = await chrome.runtime.sendMessage({ type: 'FETCH_DB_STATUSES' });
+    if (!res?.ok || !res.data) return;
+    applyDBStatesToPage(res.data);
+  } catch (e) {
+    console.warn('[KU-LMS+] DB同期取得エラー:', e.message);
+  }
+}
+
+function applyDBStatesToPage(assignments) {
+  if (!assignments?.length) return;
+
+  const courseId = extractCourseId(window.location.href);
+
+  // ルックアップマップ: "course_id\ttitle" → record
+  const dbMap = new Map();
+  for (const a of assignments) {
+    dbMap.set(`${a.course_id}\t${a.title}`, a);
+  }
+
+  // 授業ページ: 各セクションにDBステータスを反映
+  document.querySelectorAll('section.list-group-item.cl-contentsList_listGroupItem').forEach((section) => {
+    const rawTitle = section.querySelector('.cm-contentsList_contentName')?.textContent ?? '';
+    const title = rawTitle.replace(/\bNew\b/g, '').replace(/\s+/g, ' ').trim();
+    if (!title) return;
+
+    const dbRecord = dbMap.get(`${courseId}\t${title}`);
+    if (!dbRecord) return;
+
+    // is_hidden → opacity: 0.2 + 操作不可 (Plan B)
+    if (dbRecord.is_hidden) {
+      section.style.opacity = '0.2';
+      section.style.pointerEvents = 'none';
+      const bar = section.querySelector('[data-kulms-actions]');
+      if (bar) bar.style.display = 'none';
+      return;
+    }
+
+    // is_completed_manual → opacity: 0.45 + ボタン更新
+    if (dbRecord.is_completed_manual) {
+      section.style.opacity = '0.45';
+      const bar = section.querySelector('[data-kulms-actions]');
+      if (bar) {
+        const btns = bar.querySelectorAll('button');
+        const completeBtn = btns[0];
+        const hideBtn     = btns[1];
+        if (completeBtn) {
+          completeBtn.textContent = '✓ 完了済み';
+          completeBtn.disabled = true;
+          completeBtn.style.cssText = [
+            'background:#dcfce7', 'color:#15803d', 'border:1px solid #86efac',
+            'border-radius:6px', 'padding:3px 10px', 'font-size:11px',
+            'font-weight:600', 'cursor:default',
+            'font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',
+          ].join(';');
+        }
+        if (hideBtn) hideBtn.style.display = 'none';
+      }
+    }
+  });
+
+  // トップページ: ミニダッシュボード更新
+  updateMiniDashboardContent(assignments);
+}
+
+async function updateMiniDashboardContent(assignments) {
+  const container = document.getElementById('kulms-dashboard-content');
+  if (!container) return;
+
+  function esc(s) {
+    return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  const now = new Date();
+  const upcoming = assignments
+    .filter((a) => a.deadline && new Date(a.deadline) > now && !a.is_completed_manual && !a.is_hidden)
+    .sort((a, b) => new Date(a.deadline) - new Date(b.deadline))
+    .slice(0, 4);
+
+  let itemsHtml;
+  if (upcoming.length > 0) {
+    itemsHtml = upcoming.map((item, i) => {
+      const dl = new Date(item.deadline);
+      const diffH = (dl - now) / 36e5;
+      const isLast = i === upcoming.length - 1;
+
+      let badgeText, badgeBg, badgeColor;
+      if (diffH < 24) {
+        badgeText = `🔥 ${Math.ceil(diffH)}時間`;
+        badgeBg = '#dc2626'; badgeColor = '#fff';
+      } else if (diffH < 72) {
+        badgeText = `あと${Math.floor(diffH / 24)}日`;
+        badgeBg = '#fef9c3'; badgeColor = '#854d0e';
+      } else {
+        badgeText = `あと${Math.floor(diffH / 24)}日`;
+        badgeBg = 'rgba(255,255,255,.15)'; badgeColor = 'rgba(255,255,255,.9)';
+      }
+
+      const titleShort = item.title.length > 22 ? item.title.slice(0, 22) + '…' : item.title;
+      const coursePart = item.course_name
+        ? `<div style="font-size:9px;opacity:.6;margin-bottom:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(item.course_name)}</div>`
+        : '';
+
+      return [
+        `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;`,
+        `padding:5px 0;${isLast ? '' : 'border-bottom:1px solid rgba(255,255,255,.12);'}">`,
+        `<div style="flex:1;min-width:0;">`,
+        coursePart,
+        `<div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(titleShort)}</div>`,
+        `</div>`,
+        `<span style="flex-shrink:0;font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;`,
+        `background:${badgeBg};color:${badgeColor};">${badgeText}</span>`,
+        `</div>`,
+      ].join('');
+    }).join('');
+  } else {
+    itemsHtml = '<div style="font-size:12px;opacity:.6;padding:6px 0 8px;">締切が近い課題はありません</div>';
+  }
+
+  const { lastSyncAt } = await chrome.storage.local.get(['lastSyncAt']);
+  const syncTime = lastSyncAt
+    ? new Date(lastSyncAt).toLocaleString('ja-JP', {
+        month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit',
+      })
+    : '未同期';
+
+  container.innerHTML = [
+    itemsHtml,
+    `<div style="font-size:10px;opacity:.5;margin-top:8px;">最終同期: ${syncTime}</div>`,
+  ].join('');
+}
+
+// =============================================
 // ユーティリティ
 // NOTE: 以下の関数は public/bookmarklet.js にも複製されています。
 //       WebClass の仕様変更時は両ファイルを同期してください。
@@ -450,6 +808,6 @@ function parseDateRange(text) {
   return { start_time: null, deadline: null };
 }
 
-function sendStatus(status, detail) {
-  chrome.runtime.sendMessage({ type: 'SCRAPE_STATUS', status, detail });
+function sendStatus(status, detail, progress) {
+  chrome.runtime.sendMessage({ type: 'SCRAPE_STATUS', status, detail, progress });
 }

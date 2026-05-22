@@ -25,9 +25,9 @@ function setLoginError(msg) {
 }
 
 function clearFieldErrors() {
-  document.getElementById('emailError').className    = 'field-error';
-  document.getElementById('passwordError').className = 'field-error';
-  document.getElementById('email').classList.remove('error');
+  document.getElementById('studentIdError').className = 'field-error';
+  document.getElementById('passwordError').className  = 'field-error';
+  document.getElementById('studentId').classList.remove('error');
   document.getElementById('password').classList.remove('error');
   setLoginError('');
 }
@@ -114,14 +114,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('loginBtn').addEventListener('click', async () => {
     clearFieldErrors();
 
-    const email    = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value;
+    const studentId = document.getElementById('studentId').value.trim().toLowerCase();
+    const password  = document.getElementById('password').value;
     let valid = true;
 
-    if (!email) {
-      document.getElementById('emailError').textContent = 'メールアドレスを入力してください';
-      document.getElementById('emailError').className   = 'field-error show';
-      document.getElementById('email').classList.add('error');
+    if (!studentId || !/^k\d{6}$/.test(studentId)) {
+      document.getElementById('studentIdError').textContent = '関大ユーザーID（k + 6桁の数字）を入力してください';
+      document.getElementById('studentIdError').className   = 'field-error show';
+      document.getElementById('studentId').classList.add('error');
       valid = false;
     }
     if (!password) {
@@ -131,6 +131,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       valid = false;
     }
     if (!valid) return;
+
+    const email = `${studentId}@kansai-u.ac.jp`;
 
     const btn = document.getElementById('loginBtn');
     btn.disabled    = true;
@@ -200,6 +202,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // メール入力でエラーをクリア
-  document.getElementById('email').addEventListener('input', clearFieldErrors);
+  document.getElementById('studentId').addEventListener('input', clearFieldErrors);
   document.getElementById('password').addEventListener('input', clearFieldErrors);
 });

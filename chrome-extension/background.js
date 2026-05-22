@@ -81,9 +81,18 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       console.info('[KU-LMS+]', message.status, message.detail ?? '');
       // scanning / fetching / uploading → 同期中に遷移
       if (['scanning', 'fetching', 'uploading'].includes(message.status)) {
-        saveSyncStatus('syncing');
+        saveSyncStatus('syncing', {
+          syncDetail:   message.detail || null,
+          syncProgress: message.progress || null,
+        });
       }
       return false;
+
+    case 'FETCH_DB_STATUSES':
+      fetchAssignmentsFromDB()
+        .then((data) => sendResponse({ ok: true, data }))
+        .catch((err) => sendResponse({ ok: false, error: err.message }));
+      return true;
 
     default:
       return false;
@@ -120,6 +129,31 @@ async function updateAssignment(courseId, title, field, value) {
     const body = await res.text();
     throw new Error(`Supabase PATCH error (${res.status}): ${body}`);
   }
+}
+
+// =============================================
+// Supabase REST: DBから全課題ステータスを取得
+// =============================================
+async function fetchAssignmentsFromDB() {
+  const { userId, accessToken: token } = await chrome.storage.local.get(['userId', 'accessToken']);
+  if (!token || !userId) return [];
+
+  const fields = 'course_id,title,course_name,deadline,is_completed_manual,is_hidden,is_submitted_lms';
+  const doReq = (jwt) =>
+    fetch(`${REST_URL}/assignments?select=${fields}&order=deadline.asc.nullslast`, {
+      headers: {
+        apikey:        SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${jwt}`,
+      },
+    });
+
+  let res = await doReq(token);
+  if (res.status === 401) {
+    const newToken = await refreshAccessToken();
+    res = await doReq(newToken);
+  }
+  if (!res.ok) return [];
+  return res.json();
 }
 
 // =============================================
@@ -267,11 +301,14 @@ async function upsertAssignments(assignments) {
   }
 
   const count = rows.length;
+
+  // DBから最新の全課題を取得（完了・非表示を正確に反映）
+  const dbAssignments = await fetchAssignmentsFromDB();
   const nowDate = new Date();
 
-  // 締切が近い順に最大4件を保存（ミニダッシュボード用）
-  const upcomingDeadlines = rows
-    .filter((r) => r.deadline && new Date(r.deadline) > nowDate)
+  // 締切が近い順に最大4件を保存（完了・非表示を除外）
+  const upcomingDeadlines = dbAssignments
+    .filter((r) => r.deadline && new Date(r.deadline) > nowDate && !r.is_completed_manual && !r.is_hidden)
     .sort((a, b) => new Date(a.deadline) - new Date(b.deadline))
     .slice(0, 4)
     .map((r) => ({ title: r.title, deadline: r.deadline, course_name: r.course_name ?? null }));
@@ -290,7 +327,17 @@ async function upsertAssignments(assignments) {
     lastSyncError:     null,
     pendingCount,
     upcomingDeadlines,
+    syncProgress:      null,
+    syncDetail:        null,
   });
+
+  // WebClass タブに同期完了を通知（DB状態をページに反映）
+  try {
+    const tabs = await chrome.tabs.query({ url: 'https://kulms.tl.kansai-u.ac.jp/*' });
+    for (const tab of tabs) {
+      chrome.tabs.sendMessage(tab.id, { type: 'SYNC_COMPLETE', data: dbAssignments }).catch(() => {});
+    }
+  } catch { /* tab query can fail in some contexts */ }
 
   return count;
 }

@@ -29,10 +29,11 @@ export default function LegalPage() {
 
           <div className="space-y-2">
             <h3 className="font-semibold text-slate-700 dark:text-slate-200">1. 本サービスについて</h3>
+            <p className="text-red-600 dark:text-red-400 font-medium mb-2">
+              ※本拡張機能は学生が独自に開発した非公式ツールであり、関西大学およびWebClass公式とは一切関係ありません。
+            </p>
             <p>
-              KU-LMS+（以下「本サービス」）は、関西大学の学習管理システム WebClass の課題情報を
-              個人的に管理・閲覧するための非公式ツールです。関西大学および WebClass（Manaba）とは
-              一切関係ありません。
+              KU-LMS+（以下「本サービス」）は、関西大学の学習管理システム WebClass の課題情報を個人的に管理・閲覧するためのツールです。
             </p>
           </div>
 
@@ -97,15 +98,15 @@ export default function LegalPage() {
             <h3 className="font-semibold text-slate-700 dark:text-slate-200">データの削除</h3>
             <p>
               アカウント削除を希望する場合は開発者にお問い合わせください。
-              ブックマークレットのセッション情報はブラウザのストレージから手動で削除できます。
+              拡張機能のセッション情報は拡張機能の削除により破棄されます。
             </p>
           </div>
 
           <div className="space-y-2">
             <h3 className="font-semibold text-slate-700 dark:text-slate-200">WebClass へのアクセス</h3>
             <p>
-              拡張機能・ブックマークレットは WebClass のページ上で動作し、課題情報を読み取ります。
-              WebClass へのログイン情報は本サービスには送信されません。
+              本Chrome拡張機能は WebClass のページ上で動作し、課題情報を読み取ります。
+              WebClass へのログイン情報（パスワード等）は本サービスには送信されず、ユーザーのブラウザ上のセッションをそのまま利用します。
             </p>
           </div>
         </section>

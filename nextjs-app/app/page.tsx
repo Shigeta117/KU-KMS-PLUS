@@ -1,243 +1,180 @@
 'use client';
 
-import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { FilterTab } from '@/lib/types';
-import { getDeadlineUrgency } from '@/lib/types';
-import { useAssignments } from '@/lib/useAssignments';
-import { CheckCircle2, EyeOff, RefreshCw, InboxIcon, Settings, Clock, FileText } from 'lucide-react';
-import AuthGuard from '@/components/AuthGuard';
-import FilterBar from '@/components/FilterBar';
-import TaskCard from '@/components/TaskCard';
-import { usePullToRefresh } from '@/lib/usePullToRefresh';
-import { isScheduled } from '@/lib/types';
+import { ArrowRight, CheckCircle2, ShieldCheck, Zap, Download, LayoutDashboard } from 'lucide-react';
+import Link from 'next/link';
 
-export default function HomePage() {
-  return (
-    <AuthGuard>
-      <AssignmentList />
-    </AuthGuard>
-  );
-}
-
-function AssignmentList() {
+export default function LandingPage() {
   const router = useRouter();
-  const {
-    assignments, loading, error, lastUpdated,
-    loadData, handleToggleComplete, handleToggleHidden,
-  } = useAssignments();
 
-  const [activeTab,            setActiveTab]            = useState<FilterTab>('pending');
-  const [activeCategoryByTab,  setActiveCategoryByTab]  = useState<Record<FilterTab, string>>({
-    pending: '', scheduled: '', material: '', completed: '', hidden: '',
-  });
-  const [activeCourse, setActiveCourse] = useState('');
-
-  const activeCategory = activeCategoryByTab[activeTab];
-  const pullIndicatorRef = usePullToRefresh(loadData, !loading);
-
-  // =============================================
-  // フィルタリング
-  // =============================================
-  const filtered = assignments.filter((a) => {
-    const scheduled = isScheduled(a.start_time);
-    const material  = !a.deadline && !scheduled;
-
-    const matchTab =
-      activeTab === 'pending'
-        ? !a.is_completed_manual && !a.is_hidden && !scheduled && !!a.deadline
-        : activeTab === 'scheduled'
-        ? !a.is_completed_manual && !a.is_hidden && scheduled
-        : activeTab === 'material'
-        ? !a.is_completed_manual && !a.is_hidden && material
-        : activeTab === 'completed'
-        ? a.is_completed_manual && !a.is_hidden
-        : a.is_hidden;
-
-    const matchCat    = !activeCategory || a.category === activeCategory;
-    const matchCourse = !activeCourse   || a.course_name === activeCourse;
-    return matchTab && matchCat && matchCourse;
-  });
-
-  // pending タブのみ期限切れ / 期限内でセクション分け
-  const overdueItems = activeTab === 'pending'
-    ? filtered.filter((a) => getDeadlineUrgency(a.deadline) === 'overdue')
-    : [];
-  const activeItems = activeTab === 'pending'
-    ? filtered.filter((a) => getDeadlineUrgency(a.deadline) !== 'overdue')
-    : filtered;
-
-  const categories = [
-    ...new Set(assignments.map((a) => a.category).filter(Boolean)),
-  ].sort();
-
-  const courseNames = [
-    ...new Set(assignments.map((a) => a.course_name).filter((n): n is string => !!n)),
-  ].sort();
-
-  const counts: Record<FilterTab, number> = {
-    pending:   assignments.filter((a) => !a.is_completed_manual && !a.is_hidden && !isScheduled(a.start_time) && !!a.deadline).length,
-    scheduled: assignments.filter((a) => !a.is_completed_manual && !a.is_hidden &&  isScheduled(a.start_time)).length,
-    material:  assignments.filter((a) => !a.is_completed_manual && !a.is_hidden && !a.deadline && !isScheduled(a.start_time)).length,
-    completed: assignments.filter((a) =>  a.is_completed_manual && !a.is_hidden).length,
-    hidden:    assignments.filter((a) =>  a.is_hidden).length,
-  };
-
-  // =============================================
-  // 描画
-  // =============================================
   return (
-    <div className="flex flex-col min-h-dvh w-full sm:max-w-2xl sm:mx-auto sm:border-x sm:border-slate-200 dark:sm:border-slate-700">
-      {/* プルツーリフレッシュ インジケーター */}
-      <div className="flex justify-center h-0 overflow-visible pointer-events-none">
-        <div
-          ref={pullIndicatorRef}
-          className="w-8 h-8 border-4 border-white/40 border-t-white rounded-full opacity-0 transition-none"
-          style={{ transform: 'translateY(0) scale(0.6)' }}
-        />
-      </div>
-
-      {/* ヘッダー */}
-      <header
-        className="px-4 pt-safe-top pb-3 flex items-center justify-between flex-shrink-0"
-        style={{ background: 'linear-gradient(135deg, #004a8f, #0066cc)' }}
-      >
-        <div>
-          <h1 className="text-white text-lg font-bold">KU-LMS+</h1>
-          <p className="text-blue-100 text-xs">
-            {lastUpdated
-              ? `更新: ${lastUpdated.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}`
-              : '課題一覧'}
-          </p>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <button
-            onClick={loadData}
-            disabled={loading}
-            className="flex items-center gap-1.5 text-white text-sm px-3 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 transition-colors disabled:opacity-50"
+    <div className="min-h-dvh flex flex-col w-full sm:max-w-3xl sm:mx-auto bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">
+      
+      {/* Header */}
+      <header className="px-6 py-4 flex items-center justify-between border-b border-slate-100 dark:border-slate-800">
+        <div className="flex items-center gap-2">
+          <div
+            className="flex items-center justify-center w-8 h-8 rounded-lg"
+            style={{ background: 'linear-gradient(135deg, #004a8f, #0066cc)' }}
           >
-            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-            更新
-          </button>
-          <button
-            onClick={() => router.push('/settings')}
-            className="p-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/20 transition-colors"
-            aria-label="設定"
-          >
-            <Settings size={18} />
-          </button>
+            <span className="text-white text-sm font-black">K+</span>
+          </div>
+          <span className="font-bold text-lg tracking-tight">KU-LMS+</span>
         </div>
+        <button
+          onClick={() => router.push('/login')}
+          className="text-sm font-semibold text-[#0066cc] dark:text-blue-400 hover:opacity-80 transition-opacity"
+        >
+          ログイン
+        </button>
       </header>
 
-      {/* フィルタバー */}
-      <FilterBar
-        activeTab={activeTab}
-        onTabChange={(tab) => setActiveTab(tab)}
-        categories={categories}
-        activeCategory={activeCategory}
-        onCategoryChange={(cat) =>
-          setActiveCategoryByTab((prev) => ({ ...prev, [activeTab]: cat }))
-        }
-        counts={counts}
-        courseNames={courseNames}
-        activeCourse={activeCourse}
-        onCourseChange={setActiveCourse}
-      />
-
-      {/* メインコンテンツ */}
-      <main className="flex-1 px-3 py-3 pb-safe-bottom space-y-3 sm:px-4 sm:py-4">
-        {loading && (
-          <div className="flex justify-center py-16">
-            <div className="w-8 h-8 border-4 border-slate-200 dark:border-slate-700 border-t-[#004a8f] rounded-full animate-spin" />
+      <main className="flex-1">
+        
+        {/* Hero Section */}
+        <section className="px-6 py-16 md:py-24 text-center space-y-6">
+          <div className="inline-block px-3 py-1 mb-4 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 text-xs font-semibold tracking-wide border border-blue-100 dark:border-blue-800/50">
+            Unofficial Chrome Extension
           </div>
-        )}
-
-        {!loading && error && (
-          <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-xl p-4 text-sm text-red-600 dark:text-red-400">
-            {error}
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
+            WebClassの課題を、<br className="sm:hidden" />もっとスマートに。
+          </h1>
+          <p className="text-slate-500 dark:text-slate-400 max-w-lg mx-auto text-sm md:text-base leading-relaxed">
+            関西大学のWebClassから課題情報を自動収集し、見やすいダッシュボードで一元管理。複数ログインの強制ログアウトも防ぐ、安全で便利な非公式拡張機能です。
+          </p>
+          
+          <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
             <button
-              onClick={loadData}
-              className="block mt-2 text-red-700 dark:text-red-300 font-semibold underline"
+              onClick={() => document.getElementById('setup')?.scrollIntoView({ behavior: 'smooth' })}
+              className="w-full sm:w-auto px-6 py-3 rounded-xl font-bold text-white shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
+              style={{ background: '#004a8f' }}
             >
-              再試行
+              <Download size={18} />
+              導入方法を見る
+            </button>
+            <button
+              onClick={() => router.push('/login')}
+              className="w-full sm:w-auto px-6 py-3 rounded-xl font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all flex items-center justify-center gap-2"
+            >
+              <LayoutDashboard size={18} />
+              ダッシュボードへ
             </button>
           </div>
-        )}
+        </section>
 
-        {!loading && !error && filtered.length === 0 && (
-          <EmptyState tab={activeTab} />
-        )}
+        {/* Features Section */}
+        <section className="px-6 py-16 bg-slate-50 dark:bg-slate-800/50 border-y border-slate-100 dark:border-slate-800">
+          <h2 className="text-2xl font-bold text-center mb-10">主な機能</h2>
+          <div className="grid sm:grid-cols-2 gap-8 max-w-2xl mx-auto">
+            <FeatureCard 
+              icon={<Zap className="text-yellow-500" />}
+              title="自動収集 & 同期"
+              description="授業ページを開くだけで、課題の期限やタイトルを自動的に取得しデータベースに同期します。"
+            />
+            <FeatureCard 
+              icon={<LayoutDashboard className="text-blue-500" />}
+              title="整理されたダッシュボード"
+              description="期限切れ、期限内、提出済みなどを自動ソート。今やるべき課題が一目でわかります。"
+            />
+            <FeatureCard 
+              icon={<ShieldCheck className="text-green-500" />}
+              title="ログアウト防止"
+              description="バックグラウンド取得時の複数ログイン検知を回避するハイブリッド通信を採用し、安全に動作します。"
+            />
+            <FeatureCard 
+              icon={<CheckCircle2 className="text-purple-500" />}
+              title="LMS画面に直接反映"
+              description="WebClassの画面上に同期ステータスや「完了済み」ラベルを直接表示し、シームレスに連携します。"
+            />
+          </div>
+        </section>
 
-        {!loading && (
-          <>
-            {overdueItems.length > 0 && (
-              <>
-                <p className="text-xs font-semibold text-red-500 dark:text-red-400 px-1 pt-1">
-                  期限切れ
-                </p>
-                {overdueItems.map((a) => (
-                  <TaskCard
-                    key={a.id}
-                    assignment={a}
-                    onToggleComplete={handleToggleComplete}
-                    onToggleHidden={handleToggleHidden}
-                  />
-                ))}
-                {activeItems.length > 0 && (
-                  <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 px-1 pt-1">
-                    期限内
-                  </p>
-                )}
-              </>
-            )}
-            {activeItems.map((a) => (
-              <TaskCard
-                key={a.id}
-                assignment={a}
-                onToggleComplete={handleToggleComplete}
-                onToggleHidden={handleToggleHidden}
-              />
-            ))}
-          </>
-        )}
+        {/* Setup Guide */}
+        <section id="setup" className="px-6 py-16 max-w-2xl mx-auto space-y-8">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl font-bold mb-3">セットアップガイド</h2>
+            <p className="text-slate-500 dark:text-slate-400 text-sm">
+              利用を開始するまでの3つのステップ
+            </p>
+          </div>
+
+          <div className="space-y-6">
+            <StepCard number="1" title="拡張機能のインストール">
+              <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">
+                現在、デベロッパーモードでのインストールが必要です。（Chromeストア版は準備中）
+              </p>
+              <ul className="text-sm text-slate-600 dark:text-slate-400 list-disc list-inside space-y-1 ml-1">
+                <li>拡張機能のZIPファイルをダウンロードして解凍</li>
+                <li>Chromeの <code>chrome://extensions/</code> を開く</li>
+                <li>右上の「デベロッパーモード」をオンにする</li>
+                <li>「パッケージ化されていない拡張機能を読み込む」から解凍したフォルダを選択</li>
+              </ul>
+            </StepCard>
+
+            <StepCard number="2" title="アカウントの設定">
+              <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">
+                ダッシュボードを利用するためには、関大ユーザーID（〜@kansai-u.ac.jp）を用いたアカウント登録が必要です。
+              </p>
+              <button
+                onClick={() => router.push('/signup')}
+                className="text-sm font-bold text-[#0066cc] dark:text-blue-400 flex items-center gap-1 hover:underline"
+              >
+                新規アカウントを作成する <ArrowRight size={14} />
+              </button>
+            </StepCard>
+
+            <StepCard number="3" title="WebClassにアクセス">
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                拡張機能が有効な状態でWebClassにログインし、各授業ページを開いてください。
+                画面右下にステータスバーが表示され、自動的に課題の同期が開始されます。
+              </p>
+            </StepCard>
+          </div>
+        </section>
+
       </main>
+
+      {/* Footer */}
+      <footer className="px-6 py-8 border-t border-slate-200 dark:border-slate-800 text-center space-y-4">
+        <p className="text-xs text-red-600 dark:text-red-400 font-medium">
+          ※本拡張機能は学生が独自に開発した非公式ツールであり、関西大学およびWebClass公式とは一切関係ありません。
+        </p>
+        <div className="flex items-center justify-center gap-4 text-sm text-slate-500 dark:text-slate-400">
+          <Link href="/legal" className="hover:text-slate-800 dark:hover:text-slate-200 transition-colors">
+            利用規約・プライバシーポリシー
+          </Link>
+        </div>
+        <p className="text-xs text-slate-400">
+          © {new Date().getFullYear()} KU-LMS+ Unofficial Extension
+        </p>
+      </footer>
 
     </div>
   );
 }
 
-function EmptyState({ tab }: { tab: FilterTab }) {
-  const config: Record<FilterTab, { icon: React.ReactNode; text: string }> = {
-    pending: {
-      icon: <InboxIcon size={40} strokeWidth={1.5} className="text-slate-300 dark:text-slate-600" />,
-      text: '未完了の課題はありません',
-    },
-    scheduled: {
-      icon: <Clock size={40} strokeWidth={1.5} className="text-slate-300 dark:text-slate-600" />,
-      text: '開始前の課題はありません',
-    },
-    material: {
-      icon: <FileText size={40} strokeWidth={1.5} className="text-slate-300 dark:text-slate-600" />,
-      text: '資料・その他はありません',
-    },
-    completed: {
-      icon: <CheckCircle2 size={40} strokeWidth={1.5} className="text-slate-300 dark:text-slate-600" />,
-      text: '完了済みの課題はありません',
-    },
-    hidden: {
-      icon: <EyeOff size={40} strokeWidth={1.5} className="text-slate-300 dark:text-slate-600" />,
-      text: '非表示にした課題はありません',
-    },
-  };
-  const { icon, text } = config[tab];
-
+function FeatureCard({ icon, title, description }: { icon: React.ReactNode, title: string, description: string }) {
   return (
-    <div className="flex flex-col items-center justify-center py-20 text-slate-400 dark:text-slate-500">
-      <div className="mb-4">{icon}</div>
-      <p className="text-sm font-medium">{text}</p>
-      <p className="text-xs mt-1 text-slate-400 dark:text-slate-500">
-        WebClass で拡張機能またはブックマークレットを実行してください
-      </p>
+    <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col items-center text-center">
+      <div className="w-12 h-12 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4 border border-slate-100 dark:border-slate-700">
+        {icon}
+      </div>
+      <h3 className="font-bold mb-2">{title}</h3>
+      <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">{description}</p>
+    </div>
+  );
+}
+
+function StepCard({ number, title, children }: { number: string, title: string, children: React.ReactNode }) {
+  return (
+    <div className="flex gap-4">
+      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#004a8f] text-white flex items-center justify-center font-bold text-sm">
+        {number}
+      </div>
+      <div className="pt-1">
+        <h3 className="font-bold mb-2 text-slate-800 dark:text-slate-100">{title}</h3>
+        {children}
+      </div>
     </div>
   );
 }
