@@ -14,6 +14,25 @@ async function saveSyncStatus(status, extra = {}) {
 }
 
 // =============================================
+// セッション確認・事前リフレッシュ
+// JWTのexp確認 → 残り60秒未満なら事前にリフレッシュ
+// =============================================
+async function ensureValidSession() {
+  const { accessToken, refreshToken } = await chrome.storage.local.get(['accessToken', 'refreshToken']);
+  if (!accessToken || !refreshToken) throw new Error('ログインしていません。ポップアップからログインしてください。');
+
+  try {
+    const payload   = JSON.parse(atob(accessToken.split('.')[1]));
+    const remaining = payload.exp * 1000 - Date.now();
+    if (remaining > 60_000) return accessToken;
+  } catch {
+    // デコード失敗時はリフレッシュ試行
+  }
+
+  return refreshAccessToken();
+}
+
+// =============================================
 // webNavigation: WebClass ページで自動スクレイプ
 // =============================================
 chrome.webNavigation.onCompleted.addListener(
@@ -21,6 +40,15 @@ chrome.webNavigation.onCompleted.addListener(
     if (details.frameId !== 0) return;
     const { accessToken } = await chrome.storage.local.get(['accessToken']);
     if (!accessToken) return;
+
+    // スクレイプ開始前にセッションを確認・更新
+    try {
+      await ensureValidSession();
+    } catch (e) {
+      console.warn('[KU-LMS+] Session invalid, skipping scrape:', e.message);
+      await saveSyncStatus('error', { lastSyncError: 'セッションが切れています。ポップアップから再ログインしてください。' });
+      return;
+    }
 
     try {
       await chrome.scripting.executeScript({
@@ -248,12 +276,17 @@ async function refreshAccessToken() {
 async function upsertAssignments(assignments) {
   if (!assignments?.length) return 0;
 
-  const { userId, accessToken: token } = await chrome.storage.local.get([
-    'userId',
-    'accessToken',
-  ]);
+  // UPSERT前にセッションを確認・更新（スクレイプ中にトークンが切れた場合への保険）
+  let token;
+  try {
+    token = await ensureValidSession();
+  } catch (e) {
+    await saveSyncStatus('error', { lastSyncError: e.message });
+    throw e;
+  }
 
-  if (!token || !userId) {
+  const { userId } = await chrome.storage.local.get(['userId']);
+  if (!userId) {
     const err = 'ログインしていません。ポップアップからログインしてください。';
     await saveSyncStatus('error', { lastSyncError: err });
     throw new Error(err);
@@ -290,19 +323,9 @@ async function upsertAssignments(assignments) {
     res = await doRequest(token);
   } catch (e) {
     const errMsg = `ネットワークエラー: ${e.message}`;
+    console.error('[KU-LMS+] UPSERT fetch threw:', e);
     await saveSyncStatus('error', { lastSyncError: errMsg });
     throw new Error(errMsg);
-  }
-
-  if (res.status === 401) {
-    let newToken;
-    try {
-      newToken = await refreshAccessToken();
-      res = await doRequest(newToken);
-    } catch (e) {
-      await saveSyncStatus('error', { lastSyncError: e.message });
-      throw e;
-    }
   }
 
   if (!res.ok) {
