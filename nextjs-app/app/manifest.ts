@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: 'KU-LMS+ 課題管理',
     short_name: 'LMS+',
     description: '関西大学 WebClass の課題を一元管理するアプリ',
-    start_url: '/',
+    start_url: '/app',
     display: 'standalone',
     orientation: 'portrait',
     background_color: '#f8fafc',

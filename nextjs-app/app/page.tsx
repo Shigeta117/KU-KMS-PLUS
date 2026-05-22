@@ -13,12 +13,11 @@ export default function LandingPage() {
       {/* Header */}
       <header className="px-6 py-4 flex items-center justify-between border-b border-slate-100 dark:border-slate-800">
         <div className="flex items-center gap-2">
-          <div
-            className="flex items-center justify-center w-8 h-8 rounded-lg"
-            style={{ background: 'linear-gradient(135deg, #004a8f, #0066cc)' }}
-          >
-            <span className="text-white text-sm font-black">K+</span>
-          </div>
+          <img
+            src="/icons/icon-192.png"
+            alt="KU-LMS+ Logo"
+            className="w-8 h-8 rounded-lg shadow-sm"
+          />
           <span className="font-bold text-lg tracking-tight">KU-LMS+</span>
         </div>
         <button

@@ -51,12 +51,11 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         {/* ロゴ */}
         <div className="text-center mb-8">
-          <div
-            className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4"
-            style={{ background: 'linear-gradient(135deg, #004a8f, #0066cc)' }}
-          >
-            <span className="text-white text-2xl font-black">K+</span>
-          </div>
+          <img
+            src="/icons/icon-192.png"
+            alt="KU-LMS+"
+            className="inline-block w-16 h-16 rounded-2xl mb-4 shadow-sm"
+          />
           <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">KU-LMS+</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">関大 WebClass 課題管理</p>
         </div>

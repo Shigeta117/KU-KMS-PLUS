@@ -84,6 +84,11 @@ export default function SignupPage() {
       <div className="w-full max-w-sm">
         {/* ロゴ */}
         <div className="text-center mb-8">
+          <img
+            src="/icons/icon-192.png"
+            alt="KU-LMS+"
+            className="inline-block w-16 h-16 rounded-2xl mb-4 shadow-sm"
+          />
           <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">新規アカウント作成</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">関大ユーザーIDで登録</p>
         </div>

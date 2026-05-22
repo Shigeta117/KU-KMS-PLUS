@@ -12,6 +12,9 @@ export const metadata: Metadata = {
     statusBarStyle: 'black-translucent',
     title: 'LMS+',
   },
+  icons: {
+    icon: '/icons/icon-192.png',
+  },
 };
 
 export const viewport: Viewport = {
