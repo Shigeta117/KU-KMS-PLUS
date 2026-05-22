@@ -285,11 +285,24 @@ async function upsertAssignments(assignments) {
       body: JSON.stringify(rows),
     });
 
-  let res = await doRequest(token);
+  let res;
+  try {
+    res = await doRequest(token);
+  } catch (e) {
+    const errMsg = `ネットワークエラー: ${e.message}`;
+    await saveSyncStatus('error', { lastSyncError: errMsg });
+    throw new Error(errMsg);
+  }
 
   if (res.status === 401) {
-    const newToken = await refreshAccessToken();
-    res = await doRequest(newToken);
+    let newToken;
+    try {
+      newToken = await refreshAccessToken();
+      res = await doRequest(newToken);
+    } catch (e) {
+      await saveSyncStatus('error', { lastSyncError: e.message });
+      throw e;
+    }
   }
 
   if (!res.ok) {
@@ -302,8 +315,14 @@ async function upsertAssignments(assignments) {
 
   const count = rows.length;
 
-  // DBから最新の全課題を取得（完了・非表示を正確に反映）
-  const dbAssignments = await fetchAssignmentsFromDB();
+  // DBから最新の全課題を取得（タイムアウト付き）
+  const dbAssignments = await Promise.race([
+    fetchAssignmentsFromDB(),
+    new Promise((_, rej) => setTimeout(() => rej(new Error('DB fetch timeout')), 15000)),
+  ]).catch((e) => {
+    console.warn('[KU-LMS+] fetchAssignmentsFromDB:', e.message);
+    return [];
+  });
   const nowDate = new Date();
 
   // 締切が近い順に最大4件を保存（完了・非表示を除外）
