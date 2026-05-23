@@ -2,15 +2,16 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
 
 export default function SignupPage() {
   const router = useRouter();
   const [studentId, setStudentId] = useState('');
   const [password, setPassword]   = useState('');
-  const [loading,  setLoading]  = useState(false);
-  const [error,    setError]    = useState('');
-  const [success,  setSuccess]  = useState(false);
+  const [loading,  setLoading]    = useState(false);
+  const [error,    setError]      = useState('');
+  const [success,  setSuccess]    = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -32,17 +33,16 @@ export default function SignupPage() {
 
     try {
       const email = `${formattedId}@kansai-u.ac.jp`;
-      const { data, error } = await supabase.auth.signUp({ 
-        email, 
+      const { data, error } = await supabase.auth.signUp({
+        email,
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/login`
         }
       });
-      
+
       if (error) throw error;
-      
-      // If auto-login happens (confirm email disabled) or if requires confirm
+
       if (data.session) {
         router.replace('/app');
       } else {
@@ -70,7 +70,7 @@ export default function SignupPage() {
           </p>
           <button
             onClick={() => router.push('/login')}
-            className="w-full py-3 rounded-xl text-sm font-bold text-white transition-all bg-[#004a8f] hover:bg-[#003a72]"
+            className="w-full py-3 rounded-xl text-sm font-bold text-white bg-ku-blue hover:bg-ku-blue-dark transition-colors"
           >
             ログイン画面へ戻る
           </button>
@@ -84,10 +84,13 @@ export default function SignupPage() {
       <div className="w-full max-w-sm">
         {/* ロゴ */}
         <div className="text-center mb-8">
-          <img
+          <Image
             src="/icons/icon-192.png"
             alt="KU-LMS+"
-            className="inline-block w-16 h-16 rounded-2xl mb-4 shadow-sm"
+            width={64}
+            height={64}
+            className="inline-block rounded-2xl mb-4 shadow-sm"
+            priority
           />
           <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">新規アカウント作成</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">関大ユーザーIDで登録</p>
@@ -109,7 +112,7 @@ export default function SignupPage() {
               required
               autoComplete="username"
               placeholder="k000000"
-              className="w-full px-3 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 text-sm focus:outline-none focus:border-[#0066cc] dark:focus:border-blue-400 transition-colors"
+              className="w-full px-3 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 text-sm focus:outline-none focus:border-ku-accent dark:focus:border-blue-400 transition-colors"
             />
             <p className="text-xs text-slate-500 mt-1.5">
               ※@kansai-u.ac.jp 宛に確認メールが送信されます。
@@ -128,7 +131,7 @@ export default function SignupPage() {
               minLength={6}
               autoComplete="new-password"
               placeholder="6文字以上"
-              className="w-full px-3 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 text-sm focus:outline-none focus:border-[#0066cc] dark:focus:border-blue-400 transition-colors"
+              className="w-full px-3 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 text-sm focus:outline-none focus:border-ku-accent dark:focus:border-blue-400 transition-colors"
             />
           </div>
 
@@ -141,8 +144,10 @@ export default function SignupPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 rounded-xl text-sm font-bold text-white transition-all disabled:opacity-50"
-            style={{ background: loading ? '#94a3b8' : '#004a8f' }}
+            className={[
+              'w-full py-3 rounded-xl text-sm font-bold text-white transition-all disabled:opacity-50',
+              loading ? 'bg-slate-400' : 'bg-ku-blue hover:bg-ku-blue-dark',
+            ].join(' ')}
           >
             {loading ? '処理中…' : 'アカウントを作成'}
           </button>
@@ -151,7 +156,7 @@ export default function SignupPage() {
         <div className="mt-6 text-center">
           <button
             onClick={() => router.push('/login')}
-            className="text-sm text-slate-500 hover:text-[#0066cc] dark:text-slate-400 dark:hover:text-blue-400 transition-colors"
+            className="text-sm text-slate-500 hover:text-ku-accent dark:text-slate-400 dark:hover:text-blue-400 transition-colors"
           >
             すでにアカウントをお持ちの方（ログイン）
           </button>

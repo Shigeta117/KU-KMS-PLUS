@@ -9,6 +9,14 @@
   --color-ku-accent: #0066cc;
 }
 
+@utility bg-brand-gradient {
+  background: linear-gradient(135deg, var(--color-ku-blue), var(--color-ku-accent));
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
 /* iOS Safe Area ユーティリティ（viewport-fit:cover 時に有効）*/
 @utility pt-safe-top {
   padding-top: env(safe-area-inset-top);

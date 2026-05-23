@@ -56,16 +56,7 @@ function SettingsContent() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // clipboard API が使えない環境のフォールバック
-      const ta = document.createElement('textarea');
-      ta.value = loaderCode;
-      ta.style.cssText = 'position:fixed;opacity:0';
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand('copy');
-      document.body.removeChild(ta);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      // Clipboard API 非対応環境では何もしない（テキストボックスの select-all で手動コピー可）
     }
   }
 
@@ -77,10 +68,7 @@ function SettingsContent() {
   return (
     <div className="flex flex-col min-h-dvh w-full sm:max-w-2xl sm:mx-auto sm:border-x sm:border-slate-200 dark:sm:border-slate-700 bg-slate-50 dark:bg-slate-900">
       {/* ヘッダー */}
-      <header
-        className="px-4 pt-safe-top pb-3 flex items-center gap-3 flex-shrink-0"
-        style={{ background: 'linear-gradient(135deg, #004a8f, #0066cc)' }}
-      >
+      <header className="px-4 pt-safe-top pb-3 flex items-center gap-3 flex-shrink-0 bg-brand-gradient">
         <button
           onClick={() => router.back()}
           className="text-white/80 hover:text-white transition-colors p-0.5"
@@ -94,7 +82,7 @@ function SettingsContent() {
       <main className="flex-1 px-4 py-5 pb-safe-bottom space-y-4">
 
         {/* テーマ設定 */}
-        <Section icon={<Monitor size={15} className="text-[#004a8f] dark:text-blue-400" />} title="テーマ">
+        <Section icon={<Monitor size={15} className="text-ku-blue dark:text-blue-400" />} title="テーマ">
           <div className="flex gap-2">
             {THEME_OPTIONS.map(({ value, label, icon: Icon }) => (
               <button
@@ -103,7 +91,7 @@ function SettingsContent() {
                 className={[
                   'flex-1 flex flex-col items-center gap-1.5 py-3 rounded-xl border text-xs font-semibold transition-colors',
                   theme === value
-                    ? 'bg-[#004a8f] dark:bg-blue-600 text-white border-[#004a8f] dark:border-blue-600'
+                    ? 'bg-ku-blue dark:bg-blue-600 text-white border-ku-blue dark:border-blue-600'
                     : 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500',
                 ].join(' ')}
               >
@@ -115,7 +103,7 @@ function SettingsContent() {
         </Section>
 
         {/* ブックマークレット セクション */}
-        <Section icon={<Smartphone size={15} className="text-[#004a8f] dark:text-blue-400" />} title="スマホ用更新ツール（ブックマークレット）">
+        <Section icon={<Smartphone size={15} className="text-ku-blue dark:text-blue-400" />} title="スマホ用更新ツール（ブックマークレット）">
           <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
             iOS Safari など Chrome 拡張機能が使えない環境でも、
             <strong className="text-slate-700 dark:text-slate-200">ブックマークレット</strong>
@@ -126,7 +114,7 @@ function SettingsContent() {
           <div className="space-y-2.5 pt-1">
             {SETUP_STEPS.map(({ n, label, sub }) => (
               <div key={n} className="flex gap-3">
-                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[#004a8f] dark:bg-blue-600 text-white text-xs font-bold flex items-center justify-center mt-0.5">
+                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-ku-blue dark:bg-blue-600 text-white text-xs font-bold flex items-center justify-center mt-0.5">
                   {n}
                 </span>
                 <div>
@@ -173,7 +161,7 @@ function SettingsContent() {
         </Section>
 
         {/* iOS Safari 手順 */}
-        <Section icon={<Bookmark size={15} className="text-[#004a8f] dark:text-blue-400" />} title="iOS Safari での登録手順">
+        <Section icon={<Bookmark size={15} className="text-ku-blue dark:text-blue-400" />} title="iOS Safari での登録手順">
           <div className="space-y-2.5">
             {IOS_STEPS.map(({ n, text }) => (
               <div key={n} className="flex gap-3">

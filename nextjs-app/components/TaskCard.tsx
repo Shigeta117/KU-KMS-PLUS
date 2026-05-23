@@ -111,7 +111,7 @@ export default function TaskCard({
               href={detail_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:underline hover:text-[#004a8f] dark:hover:text-blue-400"
+              className="hover:underline hover:text-ku-blue dark:hover:text-blue-400"
             >
               {title}
             </a>
@@ -123,6 +123,7 @@ export default function TaskCard({
               size={13}
               strokeWidth={2.5}
               className="inline ml-1 text-emerald-600 translate-y-[-1px]"
+              aria-hidden="true"
             />
           )}
         </h3>
@@ -197,6 +198,7 @@ function ActionButton({
   return (
     <button
       onClick={onClick}
+      aria-pressed={active}
       className={[
         'flex-1 py-2.5 text-xs font-semibold transition-colors',
         active ? activeClass : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700',

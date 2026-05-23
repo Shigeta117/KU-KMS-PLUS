@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import type { FilterTab } from '@/lib/types';
 import { getDeadlineUrgency } from '@/lib/types';
@@ -37,9 +37,27 @@ function AssignmentList() {
   const pullIndicatorRef = usePullToRefresh(loadData, !loading);
 
   // =============================================
-  // フィルタリング
+  // フィルタリング（メモ化）
   // =============================================
-  const filtered = assignments.filter((a) => {
+  const categories = useMemo(
+    () => [...new Set(assignments.map((a) => a.category).filter(Boolean))].sort(),
+    [assignments]
+  );
+
+  const courseNames = useMemo(
+    () => [...new Set(assignments.map((a) => a.course_name).filter((n): n is string => !!n))].sort(),
+    [assignments]
+  );
+
+  const counts = useMemo<Record<FilterTab, number>>(() => ({
+    pending:   assignments.filter((a) => !a.is_completed_manual && !a.is_hidden && !isScheduled(a.start_time) && !!a.deadline).length,
+    scheduled: assignments.filter((a) => !a.is_completed_manual && !a.is_hidden &&  isScheduled(a.start_time)).length,
+    material:  assignments.filter((a) => !a.is_completed_manual && !a.is_hidden && !a.deadline && !isScheduled(a.start_time)).length,
+    completed: assignments.filter((a) =>  a.is_completed_manual && !a.is_hidden).length,
+    hidden:    assignments.filter((a) =>  a.is_hidden).length,
+  }), [assignments]);
+
+  const filtered = useMemo(() => assignments.filter((a) => {
     const scheduled = isScheduled(a.start_time);
     const material  = !a.deadline && !scheduled;
 
@@ -57,31 +75,17 @@ function AssignmentList() {
     const matchCat    = !activeCategory || a.category === activeCategory;
     const matchCourse = !activeCourse   || a.course_name === activeCourse;
     return matchTab && matchCat && matchCourse;
-  });
+  }), [assignments, activeTab, activeCategory, activeCourse]);
 
   // pending タブのみ期限切れ / 期限内でセクション分け
-  const overdueItems = activeTab === 'pending'
-    ? filtered.filter((a) => getDeadlineUrgency(a.deadline) === 'overdue')
-    : [];
-  const activeItems = activeTab === 'pending'
-    ? filtered.filter((a) => getDeadlineUrgency(a.deadline) !== 'overdue')
-    : filtered;
-
-  const categories = [
-    ...new Set(assignments.map((a) => a.category).filter(Boolean)),
-  ].sort();
-
-  const courseNames = [
-    ...new Set(assignments.map((a) => a.course_name).filter((n): n is string => !!n)),
-  ].sort();
-
-  const counts: Record<FilterTab, number> = {
-    pending:   assignments.filter((a) => !a.is_completed_manual && !a.is_hidden && !isScheduled(a.start_time) && !!a.deadline).length,
-    scheduled: assignments.filter((a) => !a.is_completed_manual && !a.is_hidden &&  isScheduled(a.start_time)).length,
-    material:  assignments.filter((a) => !a.is_completed_manual && !a.is_hidden && !a.deadline && !isScheduled(a.start_time)).length,
-    completed: assignments.filter((a) =>  a.is_completed_manual && !a.is_hidden).length,
-    hidden:    assignments.filter((a) =>  a.is_hidden).length,
-  };
+  const overdueItems = useMemo(
+    () => activeTab === 'pending' ? filtered.filter((a) => getDeadlineUrgency(a.deadline) === 'overdue') : [],
+    [activeTab, filtered]
+  );
+  const activeItems = useMemo(
+    () => activeTab === 'pending' ? filtered.filter((a) => getDeadlineUrgency(a.deadline) !== 'overdue') : filtered,
+    [activeTab, filtered]
+  );
 
   // =============================================
   // 描画
@@ -98,10 +102,7 @@ function AssignmentList() {
       </div>
 
       {/* ヘッダー */}
-      <header
-        className="px-4 pt-safe-top pb-3 flex items-center justify-between flex-shrink-0"
-        style={{ background: 'linear-gradient(135deg, #004a8f, #0066cc)' }}
-      >
+      <header className="px-4 pt-safe-top pb-3 flex items-center justify-between flex-shrink-0 bg-brand-gradient">
         <div>
           <h1 className="text-white text-lg font-bold">KU-LMS+</h1>
           <p className="text-blue-100 text-xs">
@@ -148,7 +149,7 @@ function AssignmentList() {
       <main className="flex-1 px-3 py-3 pb-safe-bottom space-y-3 sm:px-4 sm:py-4">
         {loading && (
           <div className="flex justify-center py-16">
-            <div className="w-8 h-8 border-4 border-slate-200 dark:border-slate-700 border-t-[#004a8f] rounded-full animate-spin" />
+            <div className="w-8 h-8 border-4 border-slate-200 dark:border-slate-700 border-t-ku-blue rounded-full animate-spin" />
           </div>
         )}
 
