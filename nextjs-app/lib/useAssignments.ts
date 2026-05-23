@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { toast } from 'sonner';
 import { supabase, fetchAssignments, updateAssignment } from '@/lib/supabase';
 import type { Assignment } from '@/lib/types';
@@ -10,6 +10,11 @@ export function useAssignments() {
   const [loading,     setLoading]     = useState(true);
   const [error,       setError]       = useState('');
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+  // 常に最新の assignments を参照するためのref
+  // optimisticUpdate の依存配列から assignments を排除し、不要な再生成を防ぐ
+  const assignmentsRef = useRef(assignments);
+  assignmentsRef.current = assignments;
 
   const loadData = useCallback(async () => {
     try {
@@ -45,7 +50,7 @@ export function useAssignments() {
       patch: Partial<Pick<Assignment, 'is_completed_manual' | 'is_hidden'>>,
       label: string
     ) => {
-      const target = assignments.find((a) => a.id === id);
+      const target = assignmentsRef.current.find((a) => a.id === id);
       if (!target) return;
 
       // ロールバック用スナップショット
@@ -77,7 +82,7 @@ export function useAssignments() {
         loadData();
       }
     },
-    [assignments, loadData]
+    [loadData] // assignmentsRef 経由で最新値を参照するため assignments 不要
   );
 
   const handleToggleComplete = useCallback(

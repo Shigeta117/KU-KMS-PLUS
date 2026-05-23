@@ -9,8 +9,12 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const [checked, setChecked] = useState(false);
 
   useEffect(() => {
+    // 8秒以内に認証状態が確認できない場合はログインへ
+    const timer = setTimeout(() => router.replace('/login'), 8000);
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
+        clearTimeout(timer);
         if (!session) {
           router.replace('/login');
         } else {
@@ -18,13 +22,16 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
         }
       }
     );
-    return () => subscription.unsubscribe();
+    return () => {
+      clearTimeout(timer);
+      subscription.unsubscribe();
+    };
   }, [router]);
 
   if (!checked) {
     return (
       <div className="flex items-center justify-center min-h-dvh">
-        <div className="w-8 h-8 border-4 border-slate-200 dark:border-slate-700 border-t-[#004a8f] rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-slate-200 dark:border-slate-700 border-t-ku-blue rounded-full animate-spin" />
       </div>
     );
   }
