@@ -89,14 +89,17 @@ npm run dev
 
 ### 3. Chrome 拡張機能のインストール
 
-1. Chrome で `chrome://extensions/` を開く
-2. 右上の「**デベロッパーモード**」をオン
-3. 「パッケージ化されていない拡張機能を読み込む」→ `chrome-extension/` フォルダを選択
+[Chrome ウェブストア](https://chromewebstore.google.com/detail/bjkjjadopceeibphlgmkonicleofhmkh) から **KU-LMS+** をインストールしてください。
+
+> ソースから直接読み込む場合:
+> 1. Chrome で `chrome://extensions/` を開く
+> 2. 右上の「**デベロッパーモード**」をオン
+> 3. 「パッケージ化されていない拡張機能を読み込む」→ `chrome-extension/` フォルダを選択
 
 ### 4. 拡張機能の初期設定
 
 1. Chrome ツールバーの **KU-LMS+** アイコンをクリック
-2. **アカウント** にアプリで登録したメール・パスワードを入力して「ログイン」
+2. **アカウント** にアプリで登録した関大ユーザーID・パスワードを入力して「ログイン」
 
 ---
 
@@ -137,8 +140,9 @@ Vercel のダッシュボードで環境変数を設定してください:
 
 | 共有するもの | 内容 |
 |---|---|
-| デプロイ済みアプリの URL | Next.js の公開 URL |
-| `chrome-extension/` フォルダ | 拡張機能一式 |
+| PWA URL | https://ku-lms-plus.vercel.app |
+| Chrome 拡張機能 | https://chromewebstore.google.com/detail/bjkjjadopceeibphlgmkonicleofhmkh |
+
 各ユーザーはアプリでアカウントを作成し、拡張機能のポップアップでログインします。  
 Row Level Security により、ユーザーごとのデータは完全に分離されます。
 

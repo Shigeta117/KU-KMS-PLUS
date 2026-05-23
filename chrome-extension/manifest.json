@@ -3,30 +3,31 @@
   "name": "KU-LMS+ スクレイパー",
   "short_name": "KU-LMS+",
   "version": "1.0.0",
-  "description": "関西大学 WebClass の課題を自動収集して Supabase に保存します",
-
-  "permissions": ["storage", "scripting", "webNavigation", "tabs"],
+  "description": "関西大学 WebClass の課題を自動収集し、専用のスマートなダッシュボードで一元管理できる非公式の拡張機能です。もう期限切れの課題に怯える必要はありません。",
+  "permissions": [
+    "storage",
+    "scripting",
+    "webNavigation",
+    "tabs"
+  ],
   "host_permissions": [
     "https://kulms.tl.kansai-u.ac.jp/*"
   ],
-
   "background": {
     "service_worker": "background.js"
   },
-
   "action": {
     "default_popup": "popup.html",
     "default_title": "KU-LMS+",
     "default_icon": {
-      "16":  "icons/icon16.png",
-      "48":  "icons/icon48.png",
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
       "128": "icons/icon128.png"
     }
   },
-
   "icons": {
-    "16":  "icons/icon16.png",
-    "48":  "icons/icon48.png",
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   }
 }

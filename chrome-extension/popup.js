@@ -196,6 +196,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
+  // PWA リンク
+  document.getElementById('pwaBtn').addEventListener('click', () => {
+    chrome.tabs.create({ url: 'https://ku-lms-plus.vercel.app' });
+  });
+
   // Enter キーでログイン
   document.getElementById('password').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') document.getElementById('loginBtn').click();
