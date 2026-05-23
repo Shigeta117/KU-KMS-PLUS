@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import InstallPrompt from '@/components/InstallPrompt';
-import ServiceWorkerInit from '@/components/ThemeProvider';
+import ServiceWorkerInit from '@/components/ServiceWorkerInit';
 import Providers from '@/components/Providers';
 
 export const metadata: Metadata = {
@@ -21,7 +21,6 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
-  userScalable: false,
   viewportFit: 'cover',
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#004a8f' },

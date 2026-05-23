@@ -1,6 +1,5 @@
 export interface Assignment {
   id: string;
-  user_id: string;
   course_id: string;
   course_name: string | null;
   title: string;
