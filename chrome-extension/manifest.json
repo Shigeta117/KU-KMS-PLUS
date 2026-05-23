@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "KU-LMS+ スクレイパー",
+  "name": "KU-LMS+ (関大WebClass拡張)",
   "short_name": "KU-LMS+",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "関西大学 WebClass の課題を自動収集し、専用のスマートなダッシュボードで一元管理できる非公式の拡張機能です。もう期限切れの課題に怯える必要はありません。",
   "permissions": [
     "storage",
