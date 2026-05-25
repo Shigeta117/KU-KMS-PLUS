@@ -11,6 +11,16 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.3.1',
+    date: '2026-05-25',
+    type: 'feat',
+    components: ['app'],
+    changes: [
+      'PC・タブレット（768px 以上）でダッシュボードを 2 カラムレイアウトに刷新',
+      '設定ページを PC 向けに広いレイアウトに対応',
+    ],
+  },
+  {
     version: '1.3.0',
     date: '2026-05-25',
     type: 'feat',

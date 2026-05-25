@@ -91,7 +91,7 @@ function AssignmentList() {
   // 描画
   // =============================================
   return (
-    <div className="flex flex-col min-h-dvh w-full sm:max-w-2xl sm:mx-auto sm:border-x sm:border-slate-200 dark:sm:border-slate-700">
+    <div className="flex flex-col min-h-dvh w-full sm:max-w-2xl md:max-w-5xl sm:mx-auto sm:border-x sm:border-slate-200 dark:sm:border-slate-700">
       {/* プルツーリフレッシュ インジケーター */}
       <div className="flex justify-center h-0 overflow-visible pointer-events-none">
         <div
@@ -130,7 +130,8 @@ function AssignmentList() {
         </div>
       </header>
 
-      {/* フィルタバー */}
+      {/* コンテンツエリア: モバイルは縦積み、PC は 2 カラム */}
+      <div className="flex flex-col flex-1 md:flex-row">
       <FilterBar
         activeTab={activeTab}
         onTabChange={(tab) => setActiveTab(tab)}
@@ -146,7 +147,7 @@ function AssignmentList() {
       />
 
       {/* メインコンテンツ */}
-      <main className="flex-1 px-3 py-3 pb-safe-bottom space-y-3 sm:px-4 sm:py-4">
+      <main className="flex-1 px-3 py-3 pb-safe-bottom space-y-3 sm:px-4 sm:py-4 md:px-5 md:py-5">
         {loading && (
           <div className="flex justify-center py-16">
             <div className="w-8 h-8 border-4 border-slate-200 dark:border-slate-700 border-t-ku-blue rounded-full animate-spin" />
@@ -204,6 +205,7 @@ function AssignmentList() {
           </>
         )}
       </main>
+      </div>
 
     </div>
   );

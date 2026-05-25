@@ -66,7 +66,7 @@ function SettingsContent() {
   }
 
   return (
-    <div className="flex flex-col min-h-dvh w-full sm:max-w-2xl sm:mx-auto sm:border-x sm:border-slate-200 dark:sm:border-slate-700 bg-slate-50 dark:bg-slate-900">
+    <div className="flex flex-col min-h-dvh w-full sm:max-w-2xl md:max-w-4xl sm:mx-auto sm:border-x sm:border-slate-200 dark:sm:border-slate-700 bg-slate-50 dark:bg-slate-900">
       {/* ヘッダー */}
       <header className="px-4 pt-safe-top pb-3 flex items-center gap-3 flex-shrink-0 bg-brand-gradient">
         <button
@@ -79,7 +79,7 @@ function SettingsContent() {
         <h1 className="text-white text-lg font-bold">設定</h1>
       </header>
 
-      <main className="flex-1 px-4 py-5 pb-safe-bottom space-y-4">
+      <main className="flex-1 px-4 py-5 pb-safe-bottom space-y-4 md:space-y-0 md:grid md:grid-cols-2 md:gap-4 md:items-start md:content-start">
 
         {/* テーマ設定 */}
         <Section icon={<Monitor size={15} className="text-ku-blue dark:text-blue-400" />} title="テーマ">
@@ -102,8 +102,8 @@ function SettingsContent() {
           </div>
         </Section>
 
-        {/* ブックマークレット セクション */}
-        <Section icon={<Smartphone size={15} className="text-ku-blue dark:text-blue-400" />} title="スマホ用更新ツール（ブックマークレット）">
+        {/* ブックマークレット セクション（PC では 2 カラム全幅）*/}
+        <Section icon={<Smartphone size={15} className="text-ku-blue dark:text-blue-400" />} title="スマホ用更新ツール（ブックマークレット）" className="md:col-span-2">
           <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
             iOS Safari など Chrome 拡張機能が使えない環境でも、
             <strong className="text-slate-700 dark:text-slate-200">ブックマークレット</strong>
@@ -191,7 +191,7 @@ function SettingsContent() {
         </Section>
 
         {/* ブックマークレットのセッションリセット説明 */}
-        <div className="px-1">
+        <div className="px-1 md:col-span-2">
           <div className="flex gap-2 items-start bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-xl p-3">
             <Trash2 size={14} className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
             <p className="text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
@@ -204,7 +204,7 @@ function SettingsContent() {
         </div>
 
         {/* フッターリンク */}
-        <div className="flex justify-center pb-2">
+        <div className="flex justify-center pb-2 md:col-span-2">
           <button
             onClick={() => router.push('/legal')}
             className="text-xs text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors underline underline-offset-2"
@@ -222,13 +222,15 @@ function Section({
   icon,
   title,
   children,
+  className,
 }: {
   icon: React.ReactNode;
   title: string;
   children: React.ReactNode;
+  className?: string;
 }) {
   return (
-    <section className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm dark:shadow-none dark:ring-1 dark:ring-slate-700 overflow-hidden">
+    <section className={['bg-white dark:bg-slate-800 rounded-2xl shadow-sm dark:shadow-none dark:ring-1 dark:ring-slate-700 overflow-hidden', className].filter(Boolean).join(' ')}>
       <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-700 flex items-center gap-2">
         {icon}
         <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100">{title}</h2>

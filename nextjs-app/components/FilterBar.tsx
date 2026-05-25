@@ -35,9 +35,12 @@ export default function FilterBar({
   onCourseChange,
 }: Props) {
   return (
-    <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-10">
+    <div className={[
+      'bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-10',
+      'md:w-64 md:flex-shrink-0 md:border-b-0 md:border-r md:self-start md:max-h-dvh md:overflow-y-auto',
+    ].join(' ')}>
       {/* タブ */}
-      <div className="flex" role="tablist">
+      <div className="flex md:flex-col" role="tablist">
         {TABS.map(({ key, label }) => (
           <button
             key={key}
@@ -46,6 +49,7 @@ export default function FilterBar({
             onClick={() => onTabChange(key)}
             className={[
               'flex-1 py-2.5 text-xs font-semibold border-b-2 transition-colors',
+              'md:flex-none md:border-b-0 md:border-l-4 md:text-left md:px-4 md:py-3',
               activeTab === key
                 ? 'border-ku-blue text-ku-blue dark:border-blue-400 dark:text-blue-400'
                 : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200',
@@ -103,7 +107,7 @@ export default function FilterBar({
       {/* カテゴリフィルタ（右端フェードで横スクロールを示唆）*/}
       {categories.length > 0 && (
         <div className="relative">
-          <div className="flex gap-2 overflow-x-auto px-3 py-2 scrollbar-none">
+          <div className="flex gap-2 overflow-x-auto px-3 py-2 scrollbar-none md:flex-wrap md:overflow-x-visible">
             <CategoryChip
               label="すべて"
               active={activeCategory === ''}
@@ -117,9 +121,9 @@ export default function FilterBar({
                 onClick={() => onCategoryChange(cat)}
               />
             ))}
-            <span className="flex-shrink-0 w-6" aria-hidden />
+            <span className="flex-shrink-0 w-6 md:hidden" aria-hidden />
           </div>
-          <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white dark:from-slate-800 to-transparent" />
+          <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white dark:from-slate-800 to-transparent md:hidden" />
         </div>
       )}
     </div>
