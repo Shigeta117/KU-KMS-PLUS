@@ -11,6 +11,15 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.2.2',
+    date: '2026-05-25',
+    type: 'fix',
+    components: ['app'],
+    changes: [
+      'Realtime サブスクリプションに user_id フィルタを追加し、不要な DB クエリを削減',
+    ],
+  },
+  {
     version: '1.2.1',
     date: '2026-05-25',
     type: 'chore',

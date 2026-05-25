@@ -33,14 +33,30 @@ export function useAssignments() {
   useEffect(() => { loadData(); }, [loadData]);
 
   // Supabase Realtime: 拡張機能・ブックマークレットのUPSERT後に自動再取得
+  // user_id フィルタで自分のレコードのみ購読（全ユーザーへの過剰発火を防ぐ）
   useEffect(() => {
-    const channel = supabase
-      .channel('assignments-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'assignments' }, () => {
-        loadData();
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    let cancelled = false;
+
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (cancelled || !user) return;
+      channel = supabase
+        .channel(`assignments-user-${user.id}`)
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'assignments',
+          filter: `user_id=eq.${user.id}`,
+        }, () => {
+          loadData();
+        })
+        .subscribe();
+    });
+
+    return () => {
+      cancelled = true;
+      if (channel) supabase.removeChannel(channel);
+    };
   }, [loadData]);
 
   // 楽観的更新 + sonner トースト with Undo
