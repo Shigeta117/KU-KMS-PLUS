@@ -11,6 +11,16 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.3.0',
+    date: '2026-05-25',
+    type: 'feat',
+    components: ['extension', 'app'],
+    changes: [
+      '課題ごとにメモを追加・編集できる機能を追加（Web・LMS 拡張機能の両方で参照・編集可能）',
+      '「非表示」ラベルを「スキップ」に変更',
+    ],
+  },
+  {
     version: '1.2.2',
     date: '2026-05-25',
     type: 'fix',

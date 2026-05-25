@@ -10,6 +10,7 @@ export interface Assignment {
   is_submitted_lms: boolean;
   is_completed_manual: boolean;
   is_hidden: boolean;
+  note: string | null;
   updated_at: string;
   created_at: string;
 }

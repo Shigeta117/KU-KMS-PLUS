@@ -257,7 +257,7 @@ function injectActionButtons() {
     bar.style.cssText = 'display:flex;align-items:center;gap:6px;padding:5px 8px 7px;border-top:1px solid rgba(0,0,0,.06);';
 
     const completeBtn = makeLmsBtn('✓ 完了', '#16a34a', '#fff');
-    const hideBtn     = makeLmsBtn('非表示', '#64748b', '#fff');
+    const skipBtn     = makeLmsBtn('スキップ', '#64748b', '#fff');
 
     async function applyAction(field, btn, other) {
       btn.disabled   = true;
@@ -279,7 +279,7 @@ function injectActionButtons() {
             'font-weight:600', 'cursor:default',
             'font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',
           ].join(';');
-          hideBtn.style.display = 'none';
+          skipBtn.style.display = 'none';
         } else {
           section.style.opacity      = '0.2';
           section.style.pointerEvents = 'none';
@@ -291,11 +291,35 @@ function injectActionButtons() {
       }
     }
 
-    completeBtn.addEventListener('click', () => applyAction('is_completed_manual', completeBtn, hideBtn));
-    hideBtn.addEventListener('click',     () => applyAction('is_hidden',            hideBtn,     completeBtn));
+    completeBtn.addEventListener('click', () => applyAction('is_completed_manual', completeBtn, skipBtn));
+    skipBtn.addEventListener('click',     () => applyAction('is_hidden',            skipBtn,     completeBtn));
 
     bar.appendChild(completeBtn);
-    bar.appendChild(hideBtn);
+    bar.appendChild(skipBtn);
+
+    // メモ入力欄
+    const noteInput = document.createElement('input');
+    noteInput.setAttribute('data-kulms-note', '');
+    noteInput.type = 'text';
+    noteInput.placeholder = 'メモ…';
+    noteInput.style.cssText = [
+      'flex:1', 'border:none', 'border-radius:6px', 'padding:3px 8px',
+      'font-size:11px', 'color:#374151', 'background:#f9fafb',
+      'outline:1px solid #e5e7eb',
+      'font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',
+    ].join(';');
+    noteInput.addEventListener('blur', () => {
+      const val = noteInput.value.trim() || null;
+      chrome.runtime.sendMessage({
+        type: 'UPDATE_ASSIGNMENT', courseId, title, field: 'note', value: val,
+      });
+    });
+
+    const noteRow = document.createElement('div');
+    noteRow.style.cssText = 'display:flex;padding:0 6px 6px;';
+    noteRow.appendChild(noteInput);
+    bar.appendChild(noteRow);
+
     (section.querySelector('.cl-contentsList_content') ?? section).appendChild(bar);
   });
 }
@@ -691,7 +715,7 @@ function applyDBStatesToPage(assignments) {
       if (bar) {
         const btns = bar.querySelectorAll('button');
         const completeBtn = btns[0];
-        const hideBtn     = btns[1];
+        const skipBtn     = btns[1];
         if (completeBtn) {
           completeBtn.textContent = '✓ 完了済み';
           completeBtn.disabled = true;
@@ -702,8 +726,14 @@ function applyDBStatesToPage(assignments) {
             'font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',
           ].join(';');
         }
-        if (hideBtn) hideBtn.style.display = 'none';
+        if (skipBtn) skipBtn.style.display = 'none';
       }
+    }
+
+    // note → メモ入力欄に値を反映
+    const noteInput = section.querySelector('[data-kulms-note]');
+    if (noteInput && dbRecord.note) {
+      noteInput.value = dbRecord.note;
     }
   });
 

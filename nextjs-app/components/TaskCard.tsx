@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect, useRef } from 'react';
 import { Check } from 'lucide-react';
 import type { Assignment, DeadlineUrgency } from '@/lib/types';
 import { getDeadlineUrgency, formatDeadline, formatRelativeDeadline, isScheduled, formatStartTime } from '@/lib/types';
@@ -59,12 +60,14 @@ interface Props {
   assignment: Assignment;
   onToggleComplete: (id: string, current: boolean) => void;
   onToggleHidden:   (id: string, current: boolean) => void;
+  onUpdateNote:     (id: string, note: string | null) => void;
 }
 
 export default function TaskCard({
   assignment,
   onToggleComplete,
   onToggleHidden,
+  onUpdateNote,
 }: Props) {
   const {
     id,
@@ -78,11 +81,34 @@ export default function TaskCard({
     is_submitted_lms,
     is_completed_manual,
     is_hidden,
+    note,
   } = assignment;
 
   const scheduled = isScheduled(start_time);
   const urgency   = scheduled ? 'none' : getDeadlineUrgency(deadline);
   const styles    = scheduled ? SCHEDULED_STYLE : URGENCY_STYLES[urgency];
+
+  const [isEditingNote, setIsEditingNote] = useState(false);
+  const [noteValue,     setNoteValue]     = useState(note ?? '');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (!isEditingNote) setNoteValue(note ?? '');
+  }, [note, isEditingNote]);
+
+  const commitNote = () => {
+    setIsEditingNote(false);
+    const trimmed = noteValue.trim();
+    const current = (note ?? '').trim();
+    if (trimmed !== current) {
+      onUpdateNote(id, trimmed || null);
+    }
+  };
+
+  const startEditing = () => {
+    setIsEditingNote(true);
+    setTimeout(() => textareaRef.current?.focus(), 0);
+  };
 
   return (
     <article
@@ -159,6 +185,35 @@ export default function TaskCard({
             LMS 提出履歴あり
           </p>
         )}
+
+        {/* メモエリア */}
+        <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-700/50">
+          {isEditingNote ? (
+            <textarea
+              ref={textareaRef}
+              value={noteValue}
+              onChange={(e) => setNoteValue(e.target.value)}
+              onBlur={commitNote}
+              placeholder="メモを入力…"
+              rows={2}
+              className="w-full text-xs text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-700/50 rounded-md px-2 py-1.5 border border-slate-200 dark:border-slate-600 resize-none outline-none focus:border-ku-blue dark:focus:border-blue-400"
+            />
+          ) : noteValue ? (
+            <button
+              onClick={startEditing}
+              className="w-full text-left text-xs text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 py-0.5 transition-colors whitespace-pre-wrap break-words"
+            >
+              {noteValue}
+            </button>
+          ) : (
+            <button
+              onClick={startEditing}
+              className="text-xs text-slate-400 dark:text-slate-600 hover:text-slate-600 dark:hover:text-slate-400 transition-colors"
+            >
+              + メモを追加
+            </button>
+          )}
+        </div>
       </div>
 
       {/* アクションボタン */}
@@ -170,7 +225,7 @@ export default function TaskCard({
           inactiveLabel="完了にする"
           activeClass="text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950"
         />
-        {/* 完了済みの課題は非表示ボタンを非表示にして完了/非表示の複合状態を防ぐ */}
+        {/* 完了済みの課題はスキップボタンを非表示にして完了/スキップの複合状態を防ぐ */}
         {!is_completed_manual && (
           <>
             <div className="w-px bg-slate-100 dark:bg-slate-700" />
@@ -178,7 +233,7 @@ export default function TaskCard({
               onClick={() => onToggleHidden(id, is_hidden)}
               active={is_hidden}
               activeLabel="表示に戻す"
-              inactiveLabel="非表示"
+              inactiveLabel="スキップ"
               activeClass="text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-700"
             />
           </>

@@ -8,7 +8,7 @@ const TABS: { key: FilterTab; label: string }[] = [
   { key: 'scheduled', label: '開始前' },
   { key: 'material',  label: '資料' },
   { key: 'completed', label: '完了済' },
-  { key: 'hidden',    label: '非表示' },
+  { key: 'hidden',    label: 'スキップ' },
 ];
 
 interface Props {

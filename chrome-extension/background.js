@@ -94,7 +94,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       return true;
 
     case 'UPDATE_ASSIGNMENT': {
-      const ALLOWED = new Set(['is_completed_manual', 'is_hidden']);
+      const ALLOWED = new Set(['is_completed_manual', 'is_hidden', 'note']);
       if (!ALLOWED.has(message.field)) {
         sendResponse({ ok: false, error: 'Invalid field' });
         return false;
@@ -166,7 +166,7 @@ async function fetchAssignmentsFromDB() {
   const { userId, accessToken: token } = await chrome.storage.local.get(['userId', 'accessToken']);
   if (!token || !userId) return [];
 
-  const fields = 'course_id,title,course_name,deadline,is_completed_manual,is_hidden,is_submitted_lms';
+  const fields = 'course_id,title,course_name,deadline,is_completed_manual,is_hidden,is_submitted_lms,note';
   const doReq = (jwt) =>
     fetch(`${REST_URL}/assignments?select=${fields}&order=deadline.asc.nullslast`, {
       headers: {

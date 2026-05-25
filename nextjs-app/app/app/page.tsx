@@ -24,7 +24,7 @@ function AssignmentList() {
   const router = useRouter();
   const {
     assignments, loading, error, lastUpdated,
-    loadData, handleToggleComplete, handleToggleHidden,
+    loadData, handleToggleComplete, handleToggleHidden, handleUpdateNote,
   } = useAssignments();
 
   const [activeTab,            setActiveTab]            = useState<FilterTab>('pending');
@@ -182,6 +182,7 @@ function AssignmentList() {
                     assignment={a}
                     onToggleComplete={handleToggleComplete}
                     onToggleHidden={handleToggleHidden}
+                    onUpdateNote={handleUpdateNote}
                   />
                 ))}
                 {activeItems.length > 0 && (
@@ -197,6 +198,7 @@ function AssignmentList() {
                 assignment={a}
                 onToggleComplete={handleToggleComplete}
                 onToggleHidden={handleToggleHidden}
+                onUpdateNote={handleUpdateNote}
               />
             ))}
           </>
@@ -227,7 +229,7 @@ function EmptyState({ tab }: { tab: FilterTab }) {
     },
     hidden: {
       icon: <EyeOff size={40} strokeWidth={1.5} className="text-slate-300 dark:text-slate-600" />,
-      text: '非表示にした課題はありません',
+      text: 'スキップした課題はありません',
     },
   };
   const { icon, text } = config[tab];

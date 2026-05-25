@@ -16,6 +16,8 @@ export function useAssignments() {
   const assignmentsRef = useRef(assignments);
   assignmentsRef.current = assignments;
 
+  const noteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
@@ -111,8 +113,23 @@ export function useAssignments() {
   const handleToggleHidden = useCallback(
     (id: string, current: boolean) =>
       optimisticUpdate(id, { is_hidden: !current },
-        current ? '表示に戻しました' : '非表示にしました'),
+        current ? '表示に戻しました' : 'スキップしました'),
     [optimisticUpdate]
+  );
+
+  const handleUpdateNote = useCallback(
+    (id: string, note: string | null) => {
+      setAssignments((prev) => prev.map((a) => (a.id === id ? { ...a, note } : a)));
+      if (noteTimerRef.current) clearTimeout(noteTimerRef.current);
+      noteTimerRef.current = setTimeout(async () => {
+        try {
+          await updateAssignment(id, { note });
+        } catch {
+          loadData();
+        }
+      }, 800);
+    },
+    [loadData]
   );
 
   return {
@@ -123,5 +140,6 @@ export function useAssignments() {
     loadData,
     handleToggleComplete,
     handleToggleHidden,
+    handleUpdateNote,
   };
 }
