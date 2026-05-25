@@ -13,15 +13,20 @@ const URGENCY_STYLES: Record<
     border: 'border-l-red-500',
     text:   'text-red-600 dark:text-red-400',
   },
-  today: {
+  critical: {
     badge: 'bg-orange-100 dark:bg-orange-950 text-orange-700 dark:text-orange-400',
-    border: 'border-l-orange-400',
+    border: 'border-l-orange-500',
     text:   'text-orange-600 dark:text-orange-400',
   },
-  week: {
+  soon: {
     badge: 'bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-400',
     border: 'border-l-amber-400',
     text:   'text-amber-600 dark:text-amber-400',
+  },
+  week: {
+    badge: 'bg-yellow-100 dark:bg-yellow-950 text-yellow-700 dark:text-yellow-600',
+    border: 'border-l-yellow-400',
+    text:   'text-yellow-600 dark:text-yellow-500',
   },
   future: {
     badge: 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300',
@@ -36,11 +41,12 @@ const URGENCY_STYLES: Record<
 };
 
 const URGENCY_LABEL: Record<DeadlineUrgency, string> = {
-  overdue: '期限切れ',
-  today:   '今日まで',
-  week:    '今週中',
-  future:  '期限あり',
-  none:    '期限なし',
+  overdue:  '期限切れ',
+  critical: '今日まで',
+  soon:     'もうすぐ',
+  week:     '今週中',
+  future:   '期限あり',
+  none:     '期限なし',
 };
 
 const SCHEDULED_STYLE = {

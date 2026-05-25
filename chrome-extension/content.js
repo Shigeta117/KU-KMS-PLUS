@@ -65,22 +65,29 @@ function injectDeadlineBadges() {
       const diffMs   = deadline - now;
       const diffH    = diffMs / 36e5; // ミリ秒→時間
 
-      let label, bg, color, border;
+      let label, bg, color;
+      const diffDays = Math.floor(diffMs / (24 * 36e5));
       if (start && start > now) {
-        label  = '⏳ 開始前';
-        bg     = '#dbeafe'; color = '#1d4ed8'; border = '#93c5fd';
+        label = '⏳ 開始前';
+        bg = '#1d4ed8'; color = '#fff';
       } else if (diffMs < 0) {
-        label  = '期限切れ';
-        bg     = '#f1f5f9'; color = '#94a3b8'; border = '#e2e8f0';
+        label = '期限切れ';
+        bg = '#475569'; color = '#fff';
       } else if (diffH < 24) {
-        label  = `🔥 あと${Math.ceil(diffH)}時間!`;
-        bg     = '#dc2626'; color = '#fff'; border = '#dc2626';
+        label = `🔥 あと${Math.ceil(diffH)}時間`;
+        bg = '#b91c1c'; color = '#fff';
       } else if (diffH < 72) {
-        label  = `🟡 あと${Math.floor(diffH / 24)}日`;
-        bg     = '#fef9c3'; color = '#854d0e'; border = '#fde047';
+        label = `⚡ あと${diffDays}日`;
+        bg = '#c2410c'; color = '#fff';
+      } else if (diffH < 7 * 24) {
+        label = `あと${diffDays}日`;
+        bg = '#a16207'; color = '#fff';
+      } else if (diffDays < 30) {
+        label = `${Math.min(Math.floor(diffDays / 7), 3)}週間後`;
+        bg = '#15803d'; color = '#fff';
       } else {
-        label  = `🟢 あと${Math.floor(diffH / 24)}日`;
-        bg     = '#dcfce7'; color = '#15803d'; border = '#86efac';
+        label = `${Math.floor(diffDays / 30)}ヶ月後`;
+        bg = '#4b5563'; color = '#fff';
       }
 
       const badge = document.createElement('span');
@@ -89,16 +96,16 @@ function injectDeadlineBadges() {
       badge.style.cssText = [
         `background:${bg}`,
         `color:${color}`,
-        `border:1px solid ${border}`,
         'display:inline-block',
         'font-size:11px',
-        'font-weight:700',
-        'padding:2px 8px',
+        'font-weight:800',
+        'padding:3px 9px',
         'border-radius:999px',
         'margin-left:8px',
         'white-space:nowrap',
         'vertical-align:middle',
-        'font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',
+        'letter-spacing:0.02em',
+        'font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif',
       ].join(';');
       el.appendChild(badge);
     });
@@ -307,6 +314,24 @@ function makeLmsBtn(label, bg, color) {
   return btn;
 }
 
+// ミニダッシュボード用バッジ属性を返すヘルパー（青グラデ背景向けに明るめの色）
+function getMiniDashboardBadge(diffH) {
+  const diffDays = Math.floor(diffH / 24);
+  if (diffH < 24) {
+    return { text: `🔥 ${Math.ceil(diffH)}時間`, bg: '#ef4444', color: '#fff' };
+  } else if (diffH < 72) {
+    return { text: `⚡ ${diffDays}日`, bg: '#f97316', color: '#fff' };
+  } else if (diffH < 7 * 24) {
+    return { text: `${diffDays}日`, bg: '#eab308', color: '#1a1a1a' };
+  } else if (diffDays < 30) {
+    const weeks = Math.min(Math.floor(diffDays / 7), 3);
+    return { text: `${weeks}週間後`, bg: 'rgba(255,255,255,0.25)', color: '#fff' };
+  } else {
+    const months = Math.floor(diffDays / 30);
+    return { text: `${months}ヶ月後`, bg: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.8)' };
+  }
+}
+
 // トップページ: KU-LMS+ ミニダッシュボードをサイドバー最上部に挿入
 async function injectMiniDashboard() {
   if (document.getElementById('kulms-mini-dashboard')) return;
@@ -351,18 +376,7 @@ async function injectMiniDashboard() {
       const dl     = new Date(item.deadline);
       const diffH  = (dl - now) / 36e5;
       const isLast = i === upcomingDeadlines.length - 1;
-
-      let badgeText, badgeBg, badgeColor;
-      if (diffH < 24) {
-        badgeText = `🔥 ${Math.ceil(diffH)}時間`;
-        badgeBg = '#dc2626'; badgeColor = '#fff';
-      } else if (diffH < 72) {
-        badgeText = `あと${Math.floor(diffH / 24)}日`;
-        badgeBg = '#fef9c3'; badgeColor = '#854d0e';
-      } else {
-        badgeText = `あと${Math.floor(diffH / 24)}日`;
-        badgeBg = 'rgba(255,255,255,.15)'; badgeColor = 'rgba(255,255,255,.9)';
-      }
+      const badge  = getMiniDashboardBadge(diffH);
 
       const titleShort = item.title.length > 22 ? item.title.slice(0, 22) + '…' : item.title;
       const coursePart = item.course_name
@@ -376,8 +390,8 @@ async function injectMiniDashboard() {
         coursePart,
         `<div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(titleShort)}</div>`,
         `</div>`,
-        `<span style="flex-shrink:0;font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;`,
-        `background:${badgeBg};color:${badgeColor};">${badgeText}</span>`,
+        `<span style="flex-shrink:0;font-size:10px;font-weight:800;padding:2px 7px;border-radius:99px;letter-spacing:0.02em;`,
+        `background:${badge.bg};color:${badge.color};">${badge.text}</span>`,
         `</div>`,
       ].join('');
     }).join('');
@@ -717,18 +731,7 @@ async function updateMiniDashboardContent(assignments) {
       const dl = new Date(item.deadline);
       const diffH = (dl - now) / 36e5;
       const isLast = i === upcoming.length - 1;
-
-      let badgeText, badgeBg, badgeColor;
-      if (diffH < 24) {
-        badgeText = `🔥 ${Math.ceil(diffH)}時間`;
-        badgeBg = '#dc2626'; badgeColor = '#fff';
-      } else if (diffH < 72) {
-        badgeText = `あと${Math.floor(diffH / 24)}日`;
-        badgeBg = '#fef9c3'; badgeColor = '#854d0e';
-      } else {
-        badgeText = `あと${Math.floor(diffH / 24)}日`;
-        badgeBg = 'rgba(255,255,255,.15)'; badgeColor = 'rgba(255,255,255,.9)';
-      }
+      const badge = getMiniDashboardBadge(diffH);
 
       const titleShort = item.title.length > 22 ? item.title.slice(0, 22) + '…' : item.title;
       const coursePart = item.course_name
@@ -742,8 +745,8 @@ async function updateMiniDashboardContent(assignments) {
         coursePart,
         `<div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(titleShort)}</div>`,
         `</div>`,
-        `<span style="flex-shrink:0;font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;`,
-        `background:${badgeBg};color:${badgeColor};">${badgeText}</span>`,
+        `<span style="flex-shrink:0;font-size:10px;font-weight:800;padding:2px 7px;border-radius:99px;letter-spacing:0.02em;`,
+        `background:${badge.bg};color:${badge.color};">${badge.text}</span>`,
         `</div>`,
       ].join('');
     }).join('');

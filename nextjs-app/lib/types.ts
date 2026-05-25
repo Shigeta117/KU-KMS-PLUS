@@ -16,7 +16,7 @@ export interface Assignment {
 
 export type FilterTab = 'pending' | 'scheduled' | 'material' | 'completed' | 'hidden';
 
-export type DeadlineUrgency = 'overdue' | 'today' | 'week' | 'future' | 'none';
+export type DeadlineUrgency = 'overdue' | 'critical' | 'soon' | 'week' | 'future' | 'none';
 
 export function getDeadlineUrgency(deadline: string | null): DeadlineUrgency {
   if (!deadline) return 'none';
@@ -25,7 +25,8 @@ export function getDeadlineUrgency(deadline: string | null): DeadlineUrgency {
   const diff = due - now;
 
   if (diff < 0)                          return 'overdue';
-  if (diff < 24 * 60 * 60 * 1000)        return 'today';
+  if (diff < 24 * 60 * 60 * 1000)        return 'critical';
+  if (diff < 72 * 60 * 60 * 1000)        return 'soon';
   if (diff < 7  * 24 * 60 * 60 * 1000)   return 'week';
   return 'future';
 }
@@ -66,9 +67,11 @@ export function formatRelativeDeadline(deadline: string | null): string {
     return `${Math.floor(h / 24)}日超過`;
   }
   const totalMin = Math.floor(diff / (60 * 1000));
-  if (totalMin === 0) return 'まもなく';
-  if (totalMin < 60) return `あと${totalMin}分`;
+  if (totalMin < 60) return 'まもなく';
   const totalH = Math.floor(diff / (60 * 60 * 1000));
   if (totalH < 24) return `あと${totalH}時間`;
-  return `あと${Math.floor(totalH / 24)}日`;
+  const diffDays = Math.floor(diff / (24 * 60 * 60 * 1000));
+  if (diffDays < 7) return `あと${diffDays}日`;
+  if (diffDays < 30) return `${Math.min(Math.floor(diffDays / 7), 3)}週間後`;
+  return `${Math.floor(diffDays / 30)}ヶ月後`;
 }
