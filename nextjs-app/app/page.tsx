@@ -1,11 +1,16 @@
 import type { ReactNode } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowRight, CheckCircle2, ShieldCheck, Zap, Download, LayoutDashboard, ExternalLink } from 'lucide-react';
+import { ArrowRight, CheckCircle2, ShieldCheck, Zap, Download, LayoutDashboard, ExternalLink, Sparkles } from 'lucide-react';
+import { CHANGELOG, type ChangeType, type ChangeComponent } from '@/lib/changelog';
 
 const CHROME_STORE_URL = 'https://chromewebstore.google.com/detail/bjkjjadopceeibphlgmkonicleofhmkh';
 
+const PREVIEW_COUNT = 3;
+
 export default function LandingPage() {
+  const previewEntries = CHANGELOG.slice(0, PREVIEW_COUNT);
+
   return (
     <div className="min-h-dvh flex flex-col w-full sm:max-w-3xl sm:mx-auto bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">
 
@@ -143,6 +148,27 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* Changelog Section */}
+        <section className="px-6 py-16 max-w-2xl mx-auto border-t border-slate-100 dark:border-slate-800">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <Sparkles size={18} className="text-blue-500" />
+              <h2 className="text-xl font-bold">最近のアップデート</h2>
+            </div>
+            <Link
+              href="/changelog"
+              className="text-xs font-semibold text-ku-accent dark:text-blue-400 flex items-center gap-1 hover:opacity-80 transition-opacity"
+            >
+              すべて見る <ArrowRight size={12} />
+            </Link>
+          </div>
+          <div className="space-y-3">
+            {previewEntries.map((entry) => (
+              <ChangelogCard key={entry.version} entry={entry} />
+            ))}
+          </div>
+        </section>
+
       </main>
 
       {/* Footer */}
@@ -153,6 +179,9 @@ export default function LandingPage() {
         <div className="flex items-center justify-center gap-4 text-sm text-slate-500 dark:text-slate-400">
           <Link href="/legal" className="hover:text-slate-800 dark:hover:text-slate-200 transition-colors">
             利用規約・プライバシーポリシー
+          </Link>
+          <Link href="/changelog" className="hover:text-slate-800 dark:hover:text-slate-200 transition-colors">
+            変更履歴
           </Link>
         </div>
         <p className="text-xs text-slate-400">
@@ -172,6 +201,61 @@ function FeatureCard({ icon, title, description }: { icon: ReactNode; title: str
       </div>
       <h3 className="font-bold mb-2">{title}</h3>
       <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">{description}</p>
+    </div>
+  );
+}
+
+const CHANGE_TYPE_LABEL: Record<ChangeType, string> = {
+  feat: '新機能',
+  fix: 'バグ修正',
+  chore: 'メンテナンス',
+};
+
+const CHANGE_TYPE_CLASS: Record<ChangeType, string> = {
+  feat: 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300 border-blue-100 dark:border-blue-800/50',
+  fix: 'bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-300 border-amber-100 dark:border-amber-800/50',
+  chore: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 border-slate-200 dark:border-slate-700',
+};
+
+const COMPONENT_LABEL: Record<ChangeComponent, string> = {
+  extension: '拡張機能',
+  app: 'ウェブアプリ',
+  other: 'その他',
+};
+
+const COMPONENT_CLASS: Record<ChangeComponent, string> = {
+  extension: 'bg-violet-50 text-violet-600 dark:bg-violet-900/30 dark:text-violet-300',
+  app: 'bg-teal-50 text-teal-600 dark:bg-teal-900/30 dark:text-teal-300',
+  other: 'bg-slate-50 text-slate-500 dark:bg-slate-800 dark:text-slate-400',
+};
+
+export function ChangelogCard({ entry }: { entry: { version: string; date: string; type: ChangeType; components: ChangeComponent[]; changes: string[] } }) {
+  return (
+    <div className="flex gap-4 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+      <div className="flex-shrink-0 text-right w-14 pt-0.5">
+        <span className="text-xs font-bold text-slate-800 dark:text-slate-100">v{entry.version}</span>
+        <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">{entry.date}</p>
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex flex-wrap gap-1 mb-2">
+          <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold border ${CHANGE_TYPE_CLASS[entry.type]}`}>
+            {CHANGE_TYPE_LABEL[entry.type]}
+          </span>
+          {entry.components.map((c) => (
+            <span key={c} className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold ${COMPONENT_CLASS[c]}`}>
+              {COMPONENT_LABEL[c]}
+            </span>
+          ))}
+        </div>
+        <ul className="space-y-1">
+          {entry.changes.map((change, i) => (
+            <li key={i} className="text-xs text-slate-600 dark:text-slate-400 flex gap-1.5 items-start">
+              <span className="mt-1.5 w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600 flex-shrink-0" />
+              {change}
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }
