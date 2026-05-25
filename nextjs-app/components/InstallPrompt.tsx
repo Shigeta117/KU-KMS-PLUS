@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { Download, X } from 'lucide-react';
 
 interface BeforeInstallPromptEvent extends Event {
@@ -61,11 +62,14 @@ export default function InstallPrompt() {
           'animate-[slide-up_0.3s_ease-out]',
         ].join(' ')}
       >
-        <div
-          className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center"
-          style={{ background: 'linear-gradient(135deg, #004a8f, #0066cc)' }}
-        >
-          <span className="text-white text-sm font-black">K+</span>
+        <div className="flex-shrink-0 w-10 h-10 rounded-xl overflow-hidden">
+          <Image
+            src="/icons/icon-192.png"
+            alt="KU-LMS+"
+            width={40}
+            height={40}
+            className="w-full h-full object-cover"
+          />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
