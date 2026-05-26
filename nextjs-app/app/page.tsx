@@ -3,6 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, CheckCircle2, ShieldCheck, Zap, Download, LayoutDashboard, ExternalLink, Sparkles } from 'lucide-react';
 import { CHANGELOG, type ChangeType, type ChangeComponent } from '@/lib/changelog';
+import { PromotionCarousel } from '@/components/PromotionCarousel';
 
 const CHROME_STORE_URL = 'https://chromewebstore.google.com/detail/bjkjjadopceeibphlgmkonicleofhmkh';
 
@@ -76,21 +77,8 @@ export default function LandingPage() {
         </section>
 
         {/* Promotion Images Section */}
-        <section className="px-4 sm:px-6 pb-16 md:pb-24 max-w-5xl mx-auto w-full">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8">
-            {[1, 2, 3, 4].map((num) => (
-              <div key={num} className="rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 border border-slate-200/50 dark:border-slate-700/50 relative aspect-[16/10] group bg-slate-100 dark:bg-slate-800">
-                <Image
-                  src={`/Promotion/KU-LMS+0${num}.png`}
-                  alt={`KU-LMS+ プレビュー ${num}`}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                  sizes="(max-width: 640px) 100vw, 50vw"
-                  priority={num <= 2}
-                />
-              </div>
-            ))}
-          </div>
+        <section className="px-4 sm:px-6 pb-16 md:pb-24 max-w-6xl mx-auto w-full">
+          <PromotionCarousel />
         </section>
 
         {/* Features Section */}

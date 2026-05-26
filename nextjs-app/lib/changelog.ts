@@ -11,6 +11,15 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.4.1',
+    date: '2026-05-26',
+    type: 'feat',
+    components: ['app'],
+    changes: [
+      'ランディングページのプロモーション画像をループ機能付きの自動スライド（カルーセル）に変更',
+    ],
+  },
+  {
     version: '1.4.0',
     date: '2026-05-26',
     type: 'feat',

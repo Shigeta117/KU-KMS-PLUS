@@ -89,9 +89,9 @@ git push origin v1.1.0
 
 | ファイル | 現在のバージョン |
 |---------|---------------|
-| `chrome-extension/manifest.json` | 1.4.0 |
-| `CHANGELOG.md` 最新リリース | 1.4.0 |
-| `nextjs-app/lib/changelog.ts` 配列先頭 | 1.4.0 |
+| `chrome-extension/manifest.json` | 1.4.1 |
+| `CHANGELOG.md` 最新リリース | 1.4.1 |
+| `nextjs-app/lib/changelog.ts` 配列先頭 | 1.4.1 |
 
 ---
 
