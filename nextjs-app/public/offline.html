@@ -21,15 +21,12 @@
     .icon {
       width: 64px;
       height: 64px;
-      background: linear-gradient(135deg, #004a8f, #0066cc);
-      border-radius: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       margin-bottom: 20px;
-      font-size: 24px;
-      font-weight: 900;
-      color: #fff;
+    }
+    .icon img {
+      width: 100%;
+      height: 100%;
+      border-radius: 16px;
     }
     h1 { margin: 0 0 8px; font-size: 18px; color: #1e293b; }
     p  { margin: 0; font-size: 14px; line-height: 1.6; }
@@ -52,7 +49,9 @@
   </style>
 </head>
 <body>
-  <div class="icon">K+</div>
+  <div class="icon">
+    <img src="/icons/icon.svg" alt="KU-LMS+ Icon" />
+  </div>
   <h1>オフラインです</h1>
   <p>インターネットに接続してから<br>もう一度お試しください</p>
   <button onclick="location.reload()">再試行</button>

@@ -9,7 +9,7 @@ export const metadata = {
 };
 
 const CHANGE_TYPE_LABEL: Record<ChangeType, string> = {
-  feat: '新機能',
+  feat: '機能・改善',
   fix: 'バグ修正',
   chore: 'メンテナンス',
 };

@@ -75,6 +75,24 @@ export default function LandingPage() {
           </p>
         </section>
 
+        {/* Promotion Images Section */}
+        <section className="px-4 sm:px-6 pb-16 md:pb-24 max-w-5xl mx-auto w-full">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8">
+            {[1, 2, 3, 4].map((num) => (
+              <div key={num} className="rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 border border-slate-200/50 dark:border-slate-700/50 relative aspect-[16/10] group bg-slate-100 dark:bg-slate-800">
+                <Image
+                  src={`/Promotion/KU-LMS+0${num}.png`}
+                  alt={`KU-LMS+ プレビュー ${num}`}
+                  fill
+                  className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                  sizes="(max-width: 640px) 100vw, 50vw"
+                  priority={num <= 2}
+                />
+              </div>
+            ))}
+          </div>
+        </section>
+
         {/* Features Section */}
         <section className="px-6 py-16 bg-slate-50 dark:bg-slate-800/50 border-y border-slate-100 dark:border-slate-800">
           <h2 className="text-2xl font-bold text-center mb-10">主な機能</h2>
@@ -206,7 +224,7 @@ function FeatureCard({ icon, title, description }: { icon: ReactNode; title: str
 }
 
 const CHANGE_TYPE_LABEL: Record<ChangeType, string> = {
-  feat: '新機能',
+  feat: '機能・改善',
   fix: 'バグ修正',
   chore: 'メンテナンス',
 };

@@ -11,9 +11,19 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.4.0',
+    date: '2026-05-26',
+    type: 'feat',
+    components: ['app'],
+    changes: [
+      'ランディングページにプロモーション画像ギャラリーを追加',
+      'オフラインページの古いアイコンを新しいデザインに修正',
+    ],
+  },
+  {
     version: '1.3.1',
     date: '2026-05-25',
-    type: 'feat',
+    type: 'chore',
     components: ['app'],
     changes: [
       'PC・タブレット（768px 以上）でダッシュボードを 2 カラムレイアウトに刷新',
